@@ -18,7 +18,7 @@ async function runScripts() {
       console.error(`Error running ${file}:`, err);
     });
 
-    await delay(15000); // Replace 5000 with the desired delay in milliseconds before running the next script.
+    await delay(15000); // Replace the number with the desired delay in milliseconds before running the next script.
   }
 }
 
