@@ -60,7 +60,7 @@ const { chromium } = require('playwright');
   await page.getByLabel('Maximum data bars').click();
   await page.getByLabel('Maximum data bars').press('Control+a');
   await page.getByLabel('Maximum data bars').fill('200000');
-  await page.getByLabel('Start date', { exact: true }).fill('2022-08-03');
+  await page.getByLabel('Start date', { exact: true }).fill('2022-08-11');
   await page.getByLabel('Use start date limit').check();
   // Tools
   await page.getByRole('link', { name: 'Tools' }).click();
@@ -98,12 +98,11 @@ const { chromium } = require('playwright');
   await page.getByRole('button', { name: 'Confirm' }).click();
   await page.waitForSelector('#button-start-stop')
   await page.click('#button-start-stop')
-
-  // await page.setViewportSize({ width: 550, height: 250});
+  await page.setViewportSize({ width: 550, height: 250});
 
 
   // <-----------------------Add the required delay------------------------->
-  await page.waitForTimeout(1000*60*2); // 4 hours
+  await page.waitForTimeout(1000*60*60*1); // 1 hour
 
   await page.waitForSelector('#eas-navbar-collection-link');
   await page.click('#eas-navbar-collection-link');

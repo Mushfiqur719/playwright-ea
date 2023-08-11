@@ -3,20 +3,32 @@ const { chromium } = require('playwright');
 (async () => {
   const browser = await chromium.launch({
     headless: false,
-    channel: "msedge"
+    channel: "msedge",
   });
+  
+  //<-------------------To Open in non-incognito mode----------------------->
+  // const browser = await chromium.launchPersistentContext('C:/Users/mushf/AppData/Local/Microsoft/Edge/User Data/Default', {
+  //   headless: false,  // Set to true for headless mode, false for visible window
+  //   // slowMo: 50,       // Slow down actions by 50ms (for better visualization)
+  //   channel: "msedge"
+  // });
+  
   const context = await browser.newContext({
     storageState: 'auth.json'
   });
+  
   const page = await context.newPage();
+
   await page.goto('https://expert-advisor-studio.com/');
   await page.getByLabel('Theme').selectOption('dark');
+
+  // <------------------------Initial Setup------------------------->
   await page.getByRole('link', { name: 'Open the Generator, the Reactor, or the Validator' }).click();
   await page.getByRole('link', { name: 'Reactor', exact: true }).click();
   
   // Change the Data Source, Symbol and Period here
   await page.getByLabel('Data source').selectOption('FXView-Demo');
-  await page.getByLabel('Symbol').selectOption('USDSGD');
+  await page.getByLabel('Symbol').selectOption('GBPUSD');
   await page.getByLabel('Period').selectOption('H1');
   // Strategy properties
   await page.locator('div').filter({ hasText: /^2\. Strategy properties$/ }).click();
@@ -48,7 +60,7 @@ const { chromium } = require('playwright');
   await page.getByLabel('Maximum data bars').click();
   await page.getByLabel('Maximum data bars').press('Control+a');
   await page.getByLabel('Maximum data bars').fill('200000');
-  await page.getByLabel('Start date', { exact: true }).fill('2022-08-03');
+  await page.getByLabel('Start date', { exact: true }).fill('2022-08-11');
   await page.getByLabel('Use start date limit').check();
   // Tools
   await page.getByRole('link', { name: 'Tools' }).click();
@@ -83,20 +95,72 @@ const { chromium } = require('playwright');
   await page.locator('div').filter({ hasText: /^Minimum profit factor$/ }).getByRole('spinbutton').fill('1.01');
   await page.getByRole('link', { name: 'Reactor', exact: true }).click();
   await page.waitForTimeout(5000);
-  await page.getByRole('button', { name: 'Start' }).click();
-  await page.setViewportSize({ width: 500, height: 250});
   await page.getByRole('button', { name: 'Confirm' }).click();
+  await page.waitForSelector('#button-start-stop')
+  await page.click('#button-start-stop')
+  await page.setViewportSize({ width: 550, height: 250});
+
+
+  // <-----------------------Add the required delay------------------------->
+  await page.waitForTimeout(1000*60*60*4); // 4 hours
+
+  await page.waitForSelector('#eas-navbar-collection-link');
+  await page.click('#eas-navbar-collection-link');
+  await page.waitForTimeout(3000);
   
-  // await context.setGeolocation({latitude:0,longitude:0});
+  await page.getByRole('button', { name: '+ Portfolio' }).click();
+  await page.waitForTimeout(3000);
+  await page.getByRole('link', { name: 'Add all' }).click();
+  await page.waitForTimeout(3000);
+  await page.waitForSelector('#eas-navbar-portfolio-link');
+  await page.click('#eas-navbar-portfolio-link');
+  await page.waitForTimeout(3000);
+  await page.getByRole('button', { name: 'Calculate' }).click();
 
-  // Zoom in and out of the window
-  // await page.evaluate(() => {
-  //   const currentZoom = parseFloat(window.getComputedStyle(document.documentElement).zoom);
-  //   const newZoom = currentZoom - 0.8;
-  //   document.documentElement.style.zoom = newZoom;
-  // });
+  // <-----------------------Validating Strategies------------------------->
 
-  // ---------------------
-//   await context.close();
-//   await browser.close();
+  // <-----------------------Scenario 1: Strategies < 30------------------------->
+
+  // <-----------------------After adding to the collection check NetProfit,MaxDrawdown,SharpRatio------------------------->
+  
+  // Wait for the table to appear on the page
+  await page.waitForSelector('#backtest-output-table');
+  // Evaluate JavaScript to extract Net profit value
+  const netProfit = await page.$eval('#backtest-profit', element => element.textContent.trim());
+  // Convert and compare the Net profit value
+  const netProfitValue = parseFloat(netProfit.split(' ')[0].replace(',', ''));
+  const threshold = 100;
+
+  if (netProfitValue > threshold) {
+    console.log("Net profit is greater than 100:", netProfit);
+  } else {
+    console.log("Net profit is not greater than 100:", netProfit);
+  }
+
+  // Evaluate JavaScript to extract Max drawdown % value
+  const MaxDrawdownPercent = await page.$eval('#backtest-drawdown-percent', element => element.textContent.trim());
+  // Convert and compare the Max drawdon % value
+  const MaxDrawdownPercentValue = parseFloat(MaxDrawdownPercent.split(' ')[0].replace(',', ''));
+  const MDthreshold = 20;
+
+  if (MaxDrawdownPercentValue > MDthreshold) {
+    console.log("Max drawdown% is greater than 20:", MaxDrawdownPercentValue);
+  } else {
+    console.log("Max drawdown% is not greater than 20:", MaxDrawdownPercentValue);
+  }
+
+  // Evaluate JavaScript to extract Sharp Ratio
+  const SharpRatio = await page.$eval('#backtest-sharpe-ratio', element => element.textContent.trim());
+  const SRthreshold = 0.01;
+  if (SharpRatio > SRthreshold) {
+    console.log("Sharp Ratio is greater than 0.01:", SharpRatio);
+  } else {
+    console.log("Sharp Ratio is not greater than 0.01:", SharpRatio);
+  }
+  
+
+
+  // <---------Uncomment below if browser needed to be closed------------>
+  // await context.close();
+  // await browser.close();
 })();
