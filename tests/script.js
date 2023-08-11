@@ -28,7 +28,7 @@ const { chromium } = require('playwright');
   
   // Change the Data Source, Symbol and Period here
   await page.getByLabel('Data source').selectOption('FXView-Demo');
-  await page.getByLabel('Symbol').selectOption('USDSGD');
+  await page.getByLabel('Symbol').selectOption('USDCHF');
   await page.getByLabel('Period').selectOption('H1');
   // Strategy properties
   await page.locator('div').filter({ hasText: /^2\. Strategy properties$/ }).click();
@@ -103,7 +103,7 @@ const { chromium } = require('playwright');
 
 
   // <-----------------------Add the required delay------------------------->
-  await page.waitForTimeout(15000); // 4 hours
+  await page.waitForTimeout(1000*60*2); // 4 hours
 
   await page.waitForSelector('#eas-navbar-collection-link');
   await page.click('#eas-navbar-collection-link');
