@@ -105,7 +105,7 @@ const { chromium } = require('playwright');
 
 
   // <--------------------Scenario 1: Strategies < 30---------------------->
-  await page.waitForTimeout(1000*60*60*12); // 12 hours after reactors been running
+  await page.waitForTimeout(1000*60*60*0.5); // 12 hours after reactors been running
 
   // Get the value from collection notification
   const producedStrategies = await page.$eval('#eas-collection-notification', element => element.textContent.trim());
@@ -166,47 +166,78 @@ const { chromium } = require('playwright');
     console.log("Sharp Ratio is not greater than 0.01:", SharpRatio);
   }
 
-  if(SharpRatio>SRthreshold && MaxDrawdownPercentValue>MDthreshold && netProfitValue>NPthreshold){
-    //<-----------------Section 1-------------------->
-    //Export the portfolio and download the unfiltered collection
-    await page.waitForSelector('#portfolio-toolbar-export');
-    await page.click('#portfolio-toolbar-export');
-    await page.waitForSelector('#export-portfolio-expert-mt5');
-    await page.click('#export-portfolio-expert-mt5');
+  //Export the portfolio and download the unfiltered collection
+  // Using select elements
+  await page.waitForSelector('#portfolio-toolbar-export');
+  await page.click('#portfolio-toolbar-export');
+  await page.waitForSelector('#export-portfolio-expert-mt5');
+  await page.click('#export-portfolio-expert-mt5');
+  await page.waitForSelector('#eas-navbar-collection-link');
+  await page.click('#eas-navbar-collection-link');
+  await page.waitForSelector('#download-collection');
+  await page.click('#download-collection');
+  await page.getByRole('link', { name: 'Collection', exact: true }).click();
 
-    //<-----------------Section 2-------------------->
-    //Verify in the downloads folder that both files for that currency pair and time frame are downloaded
-    // const expectedFileName1 = 'your-expected-file-name1.extension';
-    // const expectedFileName2 = 'your-expected-file-name2.extension';
-    // const downloadDirectory = 'path-to-your-download-directory';
 
-    // // Wait for a reasonable time for the download to complete
-    // await page.waitForTimeout(10000); // Adjust the timeout as needed
 
-    // // Check if both expected files are downloaded
-    // const file1Downloaded = fs.existsSync(path.join(downloadDirectory, expectedFileName1));
-    // const file2Downloaded = fs.existsSync(path.join(downloadDirectory, expectedFileName2));
 
-    // if (file1Downloaded && file2Downloaded) {
-    //     console.log('Both files have been downloaded successfully.');
-    // } else {
-    //     console.log('One or both files might have failed to download.');
-    // }
+  // Using selectors
+  // await page.getByRole('link', { name: 'Portfolio 0' }).click();
+  // await page.getByRole('button', { name: ' Export' }).click();
+  // await page.getByRole('link', { name: 'Portfolio Expert MT5' }).click();
+  // await page.getByRole('link', { name: 'Collection 0' }).click();
+  // await page.getByRole('button', { name: ' Download' }).click();
+  // await page.getByRole('link', { name: 'Collection', exact: true }).click();
+  // await page.getByRole('link', { name: 'Portfolio 0' }).click();
+  // await page.getByRole('button', { name: '' }).click();
+  // await page.getByRole('link', { name: 'Collection 0' }).click();
+  // await page.getByRole('button', { name: '' }).click();
+
+
+  console.log("Script1 download finished")
+
+  // if(SharpRatio>SRthreshold && MaxDrawdownPercentValue>MDthreshold && netProfitValue>NPthreshold){
+  //   //<-----------------Section 1-------------------->
+  //   //Export the portfolio and download the unfiltered collection
+  //   await page.waitForSelector('#portfolio-toolbar-export');
+  //   await page.click('#portfolio-toolbar-export');
+  //   await page.waitForSelector('#export-portfolio-expert-mt5');
+  //   await page.click('#export-portfolio-expert-mt5');
+
+  //   //<-----------------Section 2-------------------->
+  //   //Verify in the downloads folder that both files for that currency pair and time frame are downloaded
+  //   // const expectedFileName1 = 'your-expected-file-name1.extension';
+  //   // const expectedFileName2 = 'your-expected-file-name2.extension';
+  //   // const downloadDirectory = 'path-to-your-download-directory';
+
+  //   // // Wait for a reasonable time for the download to complete
+  //   // await page.waitForTimeout(10000); // Adjust the timeout as needed
+
+  //   // // Check if both expected files are downloaded
+  //   // const file1Downloaded = fs.existsSync(path.join(downloadDirectory, expectedFileName1));
+  //   // const file2Downloaded = fs.existsSync(path.join(downloadDirectory, expectedFileName2));
+
+  //   // if (file1Downloaded && file2Downloaded) {
+  //   //     console.log('Both files have been downloaded successfully.');
+  //   // } else {
+  //   //     console.log('One or both files might have failed to download.');
+  //   // }
     
-    //<-----------------Section 3-------------------->
-    //Now, Delete the portfolio and collection
-    await page.waitForSelector('#remove-all-button');
-    await page.click('#remove-all-button');
-    // Go to collection page
-    await page.waitForSelector('#eas-navbar-collection-link');
-    await page.click('#eas-navbar-collection-link');
-    // Clear collections
-    await page.waitForSelector('#remove-all-button');
-    await page.click('#remove-all-button')
+  //   //<-----------------Section 3-------------------->
     
-  }else{
-    //Check performance filters
-  }
+  //   //Now, Delete the portfolio and collection
+  //   await page.waitForSelector('#remove-all-button');
+  //   await page.click('#remove-all-button');
+  //   // Go to collection page
+  //   await page.waitForSelector('#eas-navbar-collection-link');
+  //   await page.click('#eas-navbar-collection-link');
+  //   // Clear collections
+  //   await page.waitForSelector('#remove-all-button');
+  //   await page.click('#remove-all-button')
+    
+  // }else{
+  //   //Check performance filters
+  // }
   
 
 
