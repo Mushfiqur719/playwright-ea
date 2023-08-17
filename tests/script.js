@@ -105,7 +105,7 @@ const { chromium } = require('playwright');
 
 
   // <--------------------Scenario 1: Strategies < 30---------------------->
-  await page.waitForTimeout(1000*60*60*12); // 12 hours after reactors been running
+  await page.waitForTimeout(1000*60*60*0.5); // 2 hours after reactors been running
 
   // Get the value from collection notification
   const producedStrategies = await page.$eval('#eas-collection-notification', element => element.textContent.trim());
@@ -176,7 +176,7 @@ const { chromium } = require('playwright');
 
     //<-----------------Section 2-------------------->
     //Verify in the downloads folder that both files for that currency pair and time frame are downloaded
-    // const expectedFileName1 = 'your-expected-file-name1.extension';
+    // const expectedFileName1 = 'Portfolio Expert GBPJPY H1.mq5';
     // const expectedFileName2 = 'your-expected-file-name2.extension';
     // const downloadDirectory = 'path-to-your-download-directory';
 
