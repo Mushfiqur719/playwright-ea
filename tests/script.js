@@ -105,7 +105,7 @@ const { chromium } = require('playwright');
 
 
   // <--------------------Scenario 1: Strategies < 30---------------------->
-  await page.waitForTimeout(1000*60*60*0.5); // 12 hours after reactors been running
+  await page.waitForTimeout(1000*60*60*0.5); // 2 hours after reactors been running
 
   // Get the value from collection notification
   const producedStrategies = await page.$eval('#eas-collection-notification', element => element.textContent.trim());
