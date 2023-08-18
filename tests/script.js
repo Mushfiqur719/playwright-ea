@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
 (async () => {
   const browser = await chromium.launch({
     headless: false,
-    channel: "msedge",
+    // channel: "msedge",
   });
   
   //<-------------------To Open in non-incognito mode----------------------->
@@ -105,7 +105,7 @@ const { chromium } = require('playwright');
 
 
   // <--------------------Scenario 1: Strategies < 30---------------------->
-  await page.waitForTimeout(1000*60*60*0.5); // 2 hours after reactors been running
+  await page.waitForTimeout(1000*60*60*0.1); // 2 hours after reactors been running
 
   // Get the value from collection notification
   const producedStrategies = await page.$eval('#eas-collection-notification', element => element.textContent.trim());
@@ -170,13 +170,17 @@ const { chromium } = require('playwright');
   // Using select elements
   await page.waitForSelector('#portfolio-toolbar-export');
   await page.click('#portfolio-toolbar-export');
-  await page.waitForSelector('#export-portfolio-expert-mt5');
+  const exportPromise = page.waitForSelector('#export-portfolio-expert-mt5');
   await page.click('#export-portfolio-expert-mt5');
-  await page.waitForSelector('#eas-navbar-collection-link');
-  await page.click('#eas-navbar-collection-link');
-  await page.waitForSelector('#download-collection');
-  await page.click('#download-collection');
-  await page.getByRole('link', { name: 'Collection', exact: true }).click();
+  const _export = await exportPromise;
+  console.log(await _export.path());
+  await _export.saveAs('C:/Users/FCTwin1001/Downloads/automation_downloads/USDCHF H1 FxView.mq5');
+
+  // await page.waitForSelector('#eas-navbar-collection-link');
+  // await page.click('#eas-navbar-collection-link');
+  // const collectionPromise = page.waitForSelector('#download-collection');
+  // await page.click('#download-collection');
+  // await page.getByRole('link', { name: 'Collection', exact: true }).click();
   //
 
 
