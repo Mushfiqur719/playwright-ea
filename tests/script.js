@@ -1,3 +1,5 @@
+const fs = require('fs').promises;
+const path = require('path');
 const { chromium } = require('playwright');
 
 (async () => {
@@ -105,7 +107,7 @@ const { chromium } = require('playwright');
 
 
   // <--------------------Scenario 1: Strategies < 30---------------------->
-  await page.waitForTimeout(1000*60*60*0.1); // 2 hours after reactors been running
+  await page.waitForTimeout(1000*60*60*0.05); // 2 hours after reactors been running
 
   // Get the value from collection notification
   const producedStrategies = await page.$eval('#eas-collection-notification', element => element.textContent.trim());
@@ -167,37 +169,40 @@ const { chromium } = require('playwright');
   }
 
   //Export the portfolio and download the unfiltered collection
-  // Using select elements
+
   await page.waitForSelector('#portfolio-toolbar-export');
   await page.click('#portfolio-toolbar-export');
-  const exportPromise = page.waitForSelector('#export-portfolio-expert-mt5');
-  await page.click('#export-portfolio-expert-mt5');
-  const _export = await exportPromise;
-  console.log(await _export.path());
-  await _export.saveAs('C:/Users/FCTwin1001/Downloads/automation_downloads/USDCHF H1 FxView.mq5');
+  await page.waitForSelector('#export-portfolio-expert-mt5');
 
-  // await page.waitForSelector('#eas-navbar-collection-link');
-  // await page.click('#eas-navbar-collection-link');
-  // const collectionPromise = page.waitForSelector('#download-collection');
-  // await page.click('#download-collection');
-  // await page.getByRole('link', { name: 'Collection', exact: true }).click();
-  //
+  // Wait for download to start
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('#export-portfolio-expert-mt5')
+  ]);
+
+  const downloadFolderPath = 'C:/Users/FCTwin1001/Downloads/automation_downloads/USDCHF/';
+  await fs.mkdir(downloadFolderPath, { recursive: true });
+  const suggestedFileName = download.suggestedFilename();
+  const fullDownloadPath = path.join(downloadFolderPath, suggestedFileName);
+  await download.saveAs(fullDownloadPath);
+  console.log('Download saved to:', fullDownloadPath);
 
 
+  await page.waitForSelector('#eas-navbar-collection-link');
+  await page.click('#eas-navbar-collection-link');
+  await page.waitForSelector('#download-collection');
+  await page.click('#download-collection');
 
+  const [collection_download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('link', { name: 'Collection', exact: true }).click()
+  ]);
 
-  // Using selectors
-  // await page.getByRole('link', { name: 'Portfolio 0' }).click();
-  // await page.getByRole('button', { name: ' Export' }).click();
-  // await page.getByRole('link', { name: 'Portfolio Expert MT5' }).click();
-  // await page.getByRole('link', { name: 'Collection 0' }).click();
-  // await page.getByRole('button', { name: ' Download' }).click();
-  // await page.getByRole('link', { name: 'Collection', exact: true }).click();
-  // await page.getByRole('link', { name: 'Portfolio 0' }).click();
-  // await page.getByRole('button', { name: '' }).click();
-  // await page.getByRole('link', { name: 'Collection 0' }).click();
-  // await page.getByRole('button', { name: '' }).click();
-
+  await fs.mkdir(downloadFolderPath, { recursive: true });
+  const collectionFileName = collection_download.suggestedFilename();
+  const collectionDownloadPath = path.join(downloadFolderPath, collectionFileName);
+  await collection_download.saveAs(collectionDownloadPath);
+  console.log('Collected strategies saved to:', collectionDownloadPath);
 
   console.log("Script1 download finished")
 
