@@ -177,6 +177,7 @@ const { chromium } = require('playwright');
   await page.waitForSelector('#download-collection');
   await page.click('#download-collection');
   await page.getByRole('link', { name: 'Collection', exact: true }).click();
+  //
 
 
 
