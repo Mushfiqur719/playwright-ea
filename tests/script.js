@@ -135,39 +135,73 @@ const { chromium } = require('playwright');
   await page.getByRole('button', { name: 'Calculate' }).click();
 
   // <-----------------------After adding to the collection check NetProfit,MaxDrawdown,SharpRatio------------------------->
+  async function analyzeBacktestResults(){
+
+    await page.waitForSelector('#backtest-output-table');
+    // Compare if the net profit is more than 20 thousand or not.
+    const netProfit = await page.$eval('#backtest-profit', element => element.textContent.trim());
+    const netProfitValue = parseFloat(netProfit.split(' ')[0].replace(',', ''));
+    const NPthreshold = 20000;
+    if (netProfitValue > NPthreshold) {
+      console.log("Net profit is greater than 200000, Netprofit: ", netProfit);
+    } else {
+      console.log("Net profit is not greater than 200000, Netprofit: ", netProfit);
+    }
+
+    // Compare if Max drawdown % is more than 20 or not.
+    const MaxDrawdownPercent = await page.$eval('#backtest-drawdown-percent', element => element.textContent.trim());
+    // Convert and compare the Max drawdon % value
+    const MaxDrawdownPercentValue = parseFloat(MaxDrawdownPercent.split(' ')[0].replace(',', ''));
+    const MDthreshold = 20;
+
+    if (MaxDrawdownPercentValue > MDthreshold) {
+      console.log("Max drawdown% is greater than 20:", MaxDrawdownPercentValue);
+    } else {
+      console.log("Max drawdown% is not greater than 20:", MaxDrawdownPercentValue);
+    }
+
+    // Compare if the Sharp Ratio is more than 0.10 or not
+    const SharpRatio = await page.$eval('#backtest-sharpe-ratio', element => element.textContent.trim());
+    const SRthreshold = 0.10;
+    if (SharpRatio > SRthreshold) {
+      console.log("Sharp Ratio is greater than 0.01:", SharpRatio);
+    } else {
+      console.log("Sharp Ratio is not greater than 0.01:", SharpRatio);
+    }
+
+  }
+
+  // await analyzeBacktestResults();
+
+  async function analyzeBacktestResults2() {
   
-  await page.waitForSelector('#backtest-output-table');
-  // Compare if the net profit is more than 20 thousand or not.
-  const netProfit = await page.$eval('#backtest-profit', element => element.textContent.trim());
-  const netProfitValue = parseFloat(netProfit.split(' ')[0].replace(',', ''));
-  const NPthreshold = 20000;
-  if (netProfitValue > NPthreshold) {
-    console.log("Net profit is greater than 200000, Netprofit: ", netProfit);
-  } else {
-    console.log("Net profit is not greater than 200000, Netprofit: ", netProfit);
+    await page.waitForSelector('#backtest-output-table');
+  
+    const evaluateThreshold = (value, threshold) => value > threshold;
+  
+    const getValueAndThreshold = async (selector, threshold) => {
+      const valueText = await page.$eval(selector, element => element.textContent.trim());
+      const value = parseFloat(valueText.split(' ')[0].replace(',', ''));
+      return evaluateThreshold(value, threshold);
+    };
+  
+    const NPthreshold = 20000;
+    const isNetProfitGreater = await getValueAndThreshold('#backtest-profit', NPthreshold);
+  
+    const MDthreshold = 20;
+    const isMaxDrawdownLess = await getValueAndThreshold('#backtest-drawdown-percent', MDthreshold);
+  
+    const SRthreshold = 0.10;
+    const isSharpRatioGreater = await getValueAndThreshold('#backtest-sharpe-ratio', SRthreshold);
+  
+    return isNetProfitGreater && isMaxDrawdownLess && isSharpRatioGreater;
   }
-
-  // Compare if Max drawdown % is more than 20 or not.
-  const MaxDrawdownPercent = await page.$eval('#backtest-drawdown-percent', element => element.textContent.trim());
-  // Convert and compare the Max drawdon % value
-  const MaxDrawdownPercentValue = parseFloat(MaxDrawdownPercent.split(' ')[0].replace(',', ''));
-  const MDthreshold = 20;
-
-  if (MaxDrawdownPercentValue > MDthreshold) {
-    console.log("Max drawdown% is greater than 20:", MaxDrawdownPercentValue);
-  } else {
-    console.log("Max drawdown% is not greater than 20:", MaxDrawdownPercentValue);
-  }
-
-  // Compare if the Sharp Ratio is more than 0.10 or not
-  const SharpRatio = await page.$eval('#backtest-sharpe-ratio', element => element.textContent.trim());
-  const SRthreshold = 0.10;
-  if (SharpRatio > SRthreshold) {
-    console.log("Sharp Ratio is greater than 0.01:", SharpRatio);
-  } else {
-    console.log("Sharp Ratio is not greater than 0.01:", SharpRatio);
-  }
-
+  
+  const result = await analyzeBacktestResults2();
+  console.log('All conditions met:', result);
+  
+  
+  //<----------------------Download Files Section---------------------->
   //Export the portfolio and download the unfiltered collection
 
   await page.waitForSelector('#portfolio-toolbar-export');
@@ -205,6 +239,77 @@ const { chromium } = require('playwright');
   console.log('Collected strategies saved to:', collectionDownloadPath);
 
   console.log("Script1 download finished")
+
+
+  //<----------------------Download Files Section--------------------------->
+
+  //<------------------------Start: Stop The Reactor----------------------------->
+  //Go to reactor page
+  await page.waitForSelector('#acquisition-link');
+  await page.click('#acquisition-link');
+  //Stop the reactor
+  await page.waitForSelector('#button-start-stop');
+  await page.click('#button-start-stop');
+
+  //<------------------------End: Stop The Reactor------------------------------->
+
+  //<-----------------------------Remove Porfolio and Collections-------------------------->
+    //Go to portfolio page
+  await page.waitForSelector('#eas-navbar-portfolio-link');
+  await page.click('#eas-navbar-portfolio-link');
+    //Now, Delete the portfolio and collection
+  await page.waitForSelector('#remove-all-button');
+  await page.click('#remove-all-button');
+    // Go to collection page
+  await page.waitForSelector('#eas-navbar-collection-link');
+  await page.click('#eas-navbar-collection-link');
+    // Clear collections
+  await page.waitForSelector('#remove-all-button');
+  await page.click('#remove-all-button')
+  //<-----------------------------Remove Porfolio and Collections-------------------------->
+
+  //<----------------------Use Performance Filters-------------------------->
+  // go to collection page
+  // await page.waitForSelector('#eas-navbar-collection-link');
+  // await page.click('#eas-navbar-collection-link');
+
+
+  // // Sort collection by Sharp Ratio
+  // await page.getByLabel('Sort collection by').selectOption('SharpeRatio');
+  // // Check performance filters
+  // await page.getByLabel('Use performance filters.').check();
+  // // Add validation criteria
+  // await page.getByRole('button', { name: '+ Add validation criteria' }).click();
+  // await page.getByRole('link', { name: 'Minimum Sharpe ratio' }).click();
+  // //<---------------------------------------------->
+  
+  // // Set validation criteria 
+  // await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').click();
+  // await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill('0.07');
+  // // Click outside the container to see change
+  // await page.locator('#eas-main-container').click();
+  // // go to portfolio page
+  // await page.waitForSelector('#eas-navbar-portfolio-link');
+  // await page.click('#eas-navbar-portfolio-link');
+
+  // await analyzeBacktestResults();
+
+  //<----------------------End of performance filters usage-------------------------->
+
+  //<-------------------------Upload Files Section----------------------->
+    //Go to collections page
+  await page.waitForSelector('#eas-navbar-collection-link');
+  await page.click('#eas-navbar-collection-link');
+    //Click upload button
+  // await page.waitForSelector('#upload-button');
+
+  const fileInput = await page.$('#upload-button'); // Replace with your file input selector
+  await fileInput.setInputFiles(collectionDownloadPath);
+    
+
+    
+  //<------------------------End-Upload Files Section--------------------->
+
 
   // if(SharpRatio>SRthreshold && MaxDrawdownPercentValue>MDthreshold && netProfitValue>NPthreshold){
   //   //<-----------------Section 1-------------------->
