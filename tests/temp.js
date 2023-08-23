@@ -1,5 +1,3 @@
-const fs = require('fs').promises;
-const path = require('path');
 const { chromium } = require('playwright');
 
 (async () => {
@@ -21,7 +19,6 @@ const { chromium } = require('playwright');
   
   const page = await context.newPage();
 
-  // Go to EA studio and select dark theme
   await page.goto('https://expert-advisor-studio.com/');
   await page.getByLabel('Theme').selectOption('dark');
 
@@ -31,7 +28,7 @@ const { chromium } = require('playwright');
   
   // Change the Data Source, Symbol and Period here
   await page.getByLabel('Data source').selectOption('FXView-Demo');
-  await page.getByLabel('Symbol').selectOption('USDCHF');
+  await page.getByLabel('Symbol').selectOption('USDCAD');
   await page.getByLabel('Period').selectOption('H1');
   // Strategy properties
   await page.locator('div').filter({ hasText: /^2\. Strategy properties$/ }).click();
@@ -57,13 +54,13 @@ const { chromium } = require('playwright');
   await page.getByLabel('Max exit indicators').selectOption('4');
   await page.getByLabel('Generate strategies with\nPreset Indicators').uncheck();
   await page.getByLabel('Working minutes').click();
-  await page.getByLabel('Working minutes').fill('120');
+  await page.getByLabel('Working minutes').fill('720');
   await page.getByRole('link', { name: 'Data', exact: true }).click();
   await page.getByRole('link', { name: 'Data Horizon' }).click();
   await page.getByLabel('Maximum data bars').click();
   await page.getByLabel('Maximum data bars').press('Control+a');
   await page.getByLabel('Maximum data bars').fill('200000');
-  await page.getByLabel('Start date', { exact: true }).fill('2022-08-21');
+  await page.getByLabel('Start date', { exact: true }).fill('2022-08-11');
   await page.getByLabel('Use start date limit').check();
   // Tools
   await page.getByRole('link', { name: 'Tools' }).click();
@@ -102,17 +99,13 @@ const { chromium } = require('playwright');
   await page.getByRole('button', { name: 'Confirm' }).click();
   await page.waitForSelector('#button-start-stop')
   await page.click('#button-start-stop')
-  await page.keyboard.press('Control+Minus');
-  await page.keyboard.press('Control+Minus');
-  await page.keyboard.press('Control+Minus');
   await page.setViewportSize({ width: 550, height: 250});
-
 
   // <-----------------------Validating Strategies------------------------->
 
 
   // <--------------------Scenario 1: Strategies < 30---------------------->
-  await page.waitForTimeout(1000*60*60*2); // 2 hours after reactors been running
+  await page.waitForTimeout(1000*60*60*0.3); // 12 hours after reactors been running
 
   // Get the value from collection notification
   const producedStrategies = await page.$eval('#eas-collection-notification', element => element.textContent.trim());
@@ -129,7 +122,7 @@ const { chromium } = require('playwright');
   await page.waitForSelector('#eas-navbar-collection-link');
   await page.click('#eas-navbar-collection-link');
   await page.waitForTimeout(3000);
-
+  
   await page.getByRole('button', { name: '+ Portfolio' }).click();
   await page.waitForTimeout(3000);
   await page.getByRole('link', { name: 'Add all' }).click();
@@ -140,206 +133,45 @@ const { chromium } = require('playwright');
   await page.getByRole('button', { name: 'Calculate' }).click();
 
   // <-----------------------After adding to the collection check NetProfit,MaxDrawdown,SharpRatio------------------------->
-  async function analyzeBacktestResults(){
-
-    await page.waitForSelector('#backtest-output-table');
-    // Compare if the net profit is more than 20 thousand or not.
-    const netProfit = await page.$eval('#backtest-profit', element => element.textContent.trim());
-    const netProfitValue = parseFloat(netProfit.split(' ')[0].replace(',', ''));
-    const NPthreshold = 20000;
-    if (netProfitValue > NPthreshold) {
-      console.log("Net profit is greater than 200000, Netprofit: ", netProfit);
-    } else {
-      console.log("Net profit is not greater than 200000, Netprofit: ", netProfit);
-    }
-
-    // Compare if Max drawdown % is more than 20 or not.
-    const MaxDrawdownPercent = await page.$eval('#backtest-drawdown-percent', element => element.textContent.trim());
-    // Convert and compare the Max drawdon % value
-    const MaxDrawdownPercentValue = parseFloat(MaxDrawdownPercent.split(' ')[0].replace(',', ''));
-    const MDthreshold = 20;
-
-    if (MaxDrawdownPercentValue > MDthreshold) {
-      console.log("Max drawdown% is greater than 20:", MaxDrawdownPercentValue);
-    } else {
-      console.log("Max drawdown% is not greater than 20:", MaxDrawdownPercentValue);
-    }
-
-    // Compare if the Sharp Ratio is more than 0.10 or not
-    const SharpRatio = await page.$eval('#backtest-sharpe-ratio', element => element.textContent.trim());
-    const SRthreshold = 0.10;
-    if (SharpRatio > SRthreshold) {
-      console.log("Sharp Ratio is greater than 0.01:", SharpRatio);
-    } else {
-      console.log("Sharp Ratio is not greater than 0.01:", SharpRatio);
-    }
-
+  
+  await page.waitForSelector('#backtest-output-table');
+  // Compare if the net profit is more than 20 thousand or not.
+  const netProfit = await page.$eval('#backtest-profit', element => element.textContent.trim());
+  const netProfitValue = parseFloat(netProfit.split(' ')[0].replace(',', ''));
+  const NPthreshold = 20000;
+  if (netProfitValue > NPthreshold) {
+    console.log("Net profit is greater than 200000, Netprofit: ", netProfit);
+  } else {
+    console.log("Net profit is not greater than 200000, Netprofit: ", netProfit);
   }
 
-  // await analyzeBacktestResults();
+  // Compare if Max drawdown % is more than 20 or not.
+  const MaxDrawdownPercent = await page.$eval('#backtest-drawdown-percent', element => element.textContent.trim());
+  // Convert and compare the Max drawdon % value
+  const MaxDrawdownPercentValue = parseFloat(MaxDrawdownPercent.split(' ')[0].replace(',', ''));
+  const MDthreshold = 20;
 
-  async function analyzeBacktestResults2(page, NPthreshold, maxDrawdownThreshold, SRthreshold) {
-    await page.waitForSelector('#backtest-output-table');
-  
-    const evaluateThreshold = (value, threshold) => value > threshold;
-  
-    const getValueAndThreshold = async (selector, threshold) => {
-      const valueText = await page.$eval(selector, element => element.textContent.trim());
-      const value = parseFloat(valueText.split(' ')[0].replace(',', ''));
-      return evaluateThreshold(value, threshold);
-    };
-  
-    const isNetProfitGreater = await getValueAndThreshold('#backtest-profit', NPthreshold);
-    const isMaxDrawdownLess = await getValueAndThreshold('#backtest-drawdown-percent', maxDrawdownThreshold);
-    const isSharpRatioGreater = await getValueAndThreshold('#backtest-sharpe-ratio', SRthreshold);
-  
-    return isNetProfitGreater && isMaxDrawdownLess && isSharpRatioGreater;
+  if (MaxDrawdownPercentValue > MDthreshold) {
+    console.log("Max drawdown% is greater than 20:", MaxDrawdownPercentValue);
+  } else {
+    console.log("Max drawdown% is not greater than 20:", MaxDrawdownPercentValue);
   }
-  
-  const result = await analyzeBacktestResults2();
-  console.log('All conditions met:', result);
-  
-  
-  //<----------------------Download Files Section---------------------->
-  //Export the portfolio and download the unfiltered collection
-  async function downloadCollectionPort(){
+
+  // Compare if the Sharp Ratio is more than 0.10 or not
+  const SharpRatio = await page.$eval('#backtest-sharpe-ratio', element => element.textContent.trim());
+  const SRthreshold = 0.10;
+  if (SharpRatio > SRthreshold) {
+    console.log("Sharp Ratio is greater than 0.01:", SharpRatio);
+  } else {
+    console.log("Sharp Ratio is not greater than 0.01:", SharpRatio);
+  }
+
+    //Export the portfolio and download the unfiltered collection
     await page.waitForSelector('#portfolio-toolbar-export');
     await page.click('#portfolio-toolbar-export');
     await page.waitForSelector('#export-portfolio-expert-mt5');
-
-    // Wait for download to start
-    const [download] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('#export-portfolio-expert-mt5')
-    ]);
-
-    const downloadFolderPath = 'C:/Users/FCTwin1001/Downloads/automation_downloads/USDCHF/';
-    await fs.mkdir(downloadFolderPath, { recursive: true });
-    const suggestedFileName = download.suggestedFilename();
-    const fullDownloadPath = path.join(downloadFolderPath, suggestedFileName);
-    await download.saveAs(fullDownloadPath);
-    console.log('Download saved to:', fullDownloadPath);
-
-
-    await page.waitForSelector('#eas-navbar-collection-link');
-    await page.click('#eas-navbar-collection-link');
-    await page.waitForSelector('#download-collection');
-    await page.click('#download-collection');
-
-    const [collection_download] = await Promise.all([
-      page.waitForEvent('download'),
-      page.getByRole('link', { name: 'Collection', exact: true }).click()
-    ]);
-
-    await fs.mkdir(downloadFolderPath, { recursive: true });
-    const collectionFileName = collection_download.suggestedFilename();
-    const collectionDownloadPath = path.join(downloadFolderPath, collectionFileName);
-    await collection_download.saveAs(collectionDownloadPath);
-    console.log('Collected strategies saved to:', collectionDownloadPath);
-  }
-
-  await downloadCollectionPort();
-
-  console.log("Script1 download finished")
-
-
-  //<----------------------End: Download Files Section--------------------------->
-
-  //<------------------------Start: Stop The Reactor----------------------------->
-  //Go to reactor page
-  await page.waitForSelector('#acquisition-link');
-  await page.click('#acquisition-link');
-  //Stop the reactor
-  await page.waitForSelector('#button-start-stop');
-  await page.click('#button-start-stop');
-
-  //<------------------------End: Stop The Reactor------------------------------->
-
-  //<-----------------------------Remove Porfolio and Collections-------------------------->
-    //Go to portfolio page
-  await page.waitForSelector('#eas-navbar-portfolio-link');
-  await page.click('#eas-navbar-portfolio-link');
-    //Now, Delete the portfolio and collection
-  await page.waitForSelector('#remove-all-button');
-  await page.click('#remove-all-button');
-  console.log("Portfolio deleted");
-    // Go to collection page
-  await page.waitForSelector('#eas-navbar-collection-link');
-  await page.click('#eas-navbar-collection-link');
-    // Clear collections
-  await page.waitForSelector('#remove-all-button');
-  await page.click('#remove-all-button');
-  console.log("Collection deleted");
-  //<-----------------------------End:Remove Porfolio and Collections-------------------------->
-
-  //<----------------------Use Performance Filters-------------------------->
-  // go to collection page
-  await page.waitForSelector('#eas-navbar-collection-link');
-  await page.click('#eas-navbar-collection-link');
-
-  // Sort collection by Sharp Ratio
-  await page.getByLabel('Sort collection by').selectOption('SharpeRatio');
-  // Check performance filters
-  await page.getByLabel('Use performance filters.').check();
-  // Add validation criteria
-  await page.getByRole('button', { name: '+ Add validation criteria' }).click();
-  await page.getByRole('link', { name: 'Minimum Sharpe ratio' }).click();
-  //<---------------------------------------------->
+    await page.click('#export-portfolio-expert-mt5');
   
-  // Set validation criteria 
-  await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').click();
-  await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill('0.07');
-  // Click outside the container to see change
-  await page.locator('#eas-main-container').click();
-  // go to portfolio page
-  await page.waitForSelector('#eas-navbar-portfolio-link');
-  await page.click('#eas-navbar-portfolio-link');
-
-  const result2 = analyzeBacktestResults2();
-
-  //<----------------------End of performance filters usage-------------------------->
-
-  //<-------------------------------------->
-  while (true) {
-    // Adjust Sharpe Ratio
-    await page.waitForSelector('#eas-navbar-collection-link');
-    await page.click('#eas-navbar-collection-link');
-    await page.getByLabel('Sort collection by').selectOption('SharpeRatio');
-    await page.getByLabel('Use performance filters.').check();
-    await page.getByRole('button', { name: '+ Add validation criteria' }).click();
-    await page.getByRole('link', { name: 'Minimum Sharpe ratio' }).click();
-    await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').click();
-    await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill(adjustedSharpRatio);
-    await page.locator('#eas-main-container').click();
-    await page.waitForSelector('#eas-navbar-portfolio-link');
-    await page.click('#eas-navbar-portfolio-link');
-
-    // Check if the criteria are met
-    const criteriaMet = await analyzeBacktestResults2(page, NPthreshold, maxDrawdownThreshold, SRthreshold);
-
-    if (criteriaMet) {
-      console.log('Criteria met, exporting portfolio...');
-      // Your portfolio export and collection download logic here
-      break; // Exit the loop if criteria are met
-    } else {
-      adjustedSharpRatio += adjustedSharpRatioIncrement;
-      if (adjustedSharpRatio > 0.5) {
-        console.log('Adjustment failed, maximum Sharp Ratio reached.');
-        break; // Exit the loop if maximum Sharp Ratio is reached
-      }
-    }
-  }
-  //<-------------------------------------->
-
-  //<-------------------------Upload Files Section----------------------->
-    //Go to collections page
-  await page.waitForSelector('#eas-navbar-collection-link');
-  await page.click('#eas-navbar-collection-link');
-
-  await page.locator("input[type='file']").setInputFiles(collectionDownloadPath);
-    
-  //<------------------------End-Upload Files Section--------------------->
-
 
   // if(SharpRatio>SRthreshold && MaxDrawdownPercentValue>MDthreshold && netProfitValue>NPthreshold){
   //   //<-----------------Section 1-------------------->
@@ -369,7 +201,6 @@ const { chromium } = require('playwright');
   //   // }
     
   //   //<-----------------Section 3-------------------->
-    
   //   //Now, Delete the portfolio and collection
   //   await page.waitForSelector('#remove-all-button');
   //   await page.click('#remove-all-button');

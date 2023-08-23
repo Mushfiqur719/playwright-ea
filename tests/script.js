@@ -56,13 +56,13 @@ const { chromium } = require('playwright');
   await page.getByLabel('Max exit indicators').selectOption('4');
   await page.getByLabel('Generate strategies with\nPreset Indicators').uncheck();
   await page.getByLabel('Working minutes').click();
-  await page.getByLabel('Working minutes').fill('720');
+  await page.getByLabel('Working minutes').fill('120');
   await page.getByRole('link', { name: 'Data', exact: true }).click();
   await page.getByRole('link', { name: 'Data Horizon' }).click();
   await page.getByLabel('Maximum data bars').click();
   await page.getByLabel('Maximum data bars').press('Control+a');
   await page.getByLabel('Maximum data bars').fill('200000');
-  await page.getByLabel('Start date', { exact: true }).fill('2022-08-11');
+  await page.getByLabel('Start date', { exact: true }).fill('2022-08-21');
   await page.getByLabel('Use start date limit').check();
   // Tools
   await page.getByRole('link', { name: 'Tools' }).click();
@@ -103,36 +103,210 @@ const { chromium } = require('playwright');
   await page.click('#button-start-stop')
   await page.setViewportSize({ width: 550, height: 250});
 
+  // <------------------------End: Initial Setup------------------------->
+  await page.waitForTimeout(1000*60*60*2); // Set the timer for checkup
+  
+  async function RunOrStopReactor(){
+    //Go to reactor page
+    await page.waitForSelector('#acquisition-link');
+    await page.click('#acquisition-link');
+    //Stop the reactor
+    await page.waitForSelector('#button-start-stop');
+    await page.click('#button-start-stop');
+  }
+
+
+  async function analyzeBacktestResults2(page, NPthreshold, maxDrawdownThreshold, SRthreshold) {
+    await page.waitForSelector('#backtest-output-table');
+  
+    const evaluateThreshold = (value, threshold) => value > threshold;
+  
+    const getValueAndThreshold = async (selector, threshold) => {
+      const valueText = await page.$eval(selector, element => element.textContent.trim());
+      const value = parseFloat(valueText.split(' ')[0].replace(',', ''));
+      return evaluateThreshold(value, threshold);
+    };
+  
+    const isNetProfitGreater = await getValueAndThreshold('#backtest-profit', NPthreshold);
+    const isMaxDrawdownLess = await getValueAndThreshold('#backtest-drawdown-percent', maxDrawdownThreshold);
+    const isSharpRatioGreater = await getValueAndThreshold('#backtest-sharpe-ratio', SRthreshold);
+  
+    return isNetProfitGreater && isMaxDrawdownLess && isSharpRatioGreater;
+  }
+
+  async function clearPortfolio(){
+    await page.waitForSelector('#eas-navbar-portfolio-link');
+    await page.click('#eas-navbar-portfolio-link');
+      //Now, Delete the portfolio and collection
+    await page.waitForSelector('#remove-all-button');
+    await page.click('#remove-all-button');
+    console.log("Portfolio deleted");
+
+  }
+
+  async function clearCollection(){
+        // Go to collection page
+    await page.waitForSelector('#eas-navbar-collection-link');
+    await page.click('#eas-navbar-collection-link');
+      // Clear collections
+    await page.waitForSelector('#remove-all-button');
+    await page.click('#remove-all-button');
+    console.log("Collection Deleted");
+
+  }
+
+  //<----------------------Download Files Section---------------------->
+  async function downloadFiles(){
+  //Export the portfolio and download the unfiltered collection
+  await page.waitForSelector('#portfolio-toolbar-export');
+  await page.click('#portfolio-toolbar-export');
+  await page.waitForSelector('#export-portfolio-expert-mt5');
+
+  // Wait for download to start
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('#export-portfolio-expert-mt5')
+  ]);
+
+  const downloadFolderPath = 'C:/Users/FCTwin1001/Downloads/automation_downloads/USDCHF/';
+  await fs.mkdir(downloadFolderPath, { recursive: true });
+  const suggestedFileName = download.suggestedFilename();
+  const fullDownloadPath = path.join(downloadFolderPath, suggestedFileName);
+  await download.saveAs(fullDownloadPath);
+  console.log('Download saved to:', fullDownloadPath);
+
+  await page.waitForSelector('#eas-navbar-collection-link');
+  await page.click('#eas-navbar-collection-link');
+  await page.waitForSelector('#download-collection');
+  await page.click('#download-collection');
+
+  const [collection_download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('link', { name: 'Collection', exact: true }).click()
+  ]);
+
+  await fs.mkdir(downloadFolderPath, { recursive: true });
+  const collectionFileName = collection_download.suggestedFilename();
+  const collectionDownloadPath = path.join(downloadFolderPath, collectionFileName);
+  await collection_download.saveAs(collectionDownloadPath);
+  console.log('Collected strategies saved to:', collectionDownloadPath);
+
+  console.log("Script1 download finished");
+  }
+  
+//<----------------------End: Download Files Section--------------------------->
+
+  async function uploadCollection(){
+    await page.waitForSelector('#eas-navbar-collection-link');
+    await page.click('#eas-navbar-collection-link');
+    await page.locator("input[type='file']").setInputFiles(collectionDownloadPath);
+  }
+  //<------------------------Stop The Reactor------------------>
+  await RunOrStopReactor();
+
+
+
+
+
   // <-----------------------Validating Strategies------------------------->
+
+  //<------------------------------Strategies------------------------------>
+  
+  //<------------------------------Strategy One---------------------------->
+  async function strategyOne(){
+    //<-------------------Change the stop loss and take profit------------------->
+    await page.locator('div').filter({ hasText: /^2\. Strategy properties$/ }).click();
+    await page.getByLabel('Stop Loss', { exact: true }).selectOption('1');
+    await page.getByLabel('Take Profit', { exact: true }).selectOption('1');
+    await RunOrStopReactor();
+  }
+
+  async function strategyThree(page) {
+    // async function analyzeBacktestResults2(page, NPthreshold, maxDrawdownThreshold, SRthreshold) {
+    //   // Your analyzeBacktestResults2 function implementation
+    // }
+  
+    // <-----------------------Add strategies to Portfolio------------------------->
+  
+    // ... your existing code ...
+  
+    // Define threshold values
+    const NPthreshold = 20000;
+    const maxDrawdownThreshold = 20;
+    const initialSRthreshold = 0.07;
+    const maxSRthreshold = 0.5;
+    const SRincrement = 0.02;
+  
+    let currentSRthreshold = initialSRthreshold;
+    let isCriteriaMet = false;
+  
+    while (!isCriteriaMet && currentSRthreshold <= maxSRthreshold) {
+      await page.getByLabel('Sort collection by').selectOption('SharpeRatio');
+      await page.getByLabel('Use performance filters.').check();
+      await page.getByRole('button', { name: '+ Add validation criteria' }).click();
+      await page.getByRole('link', { name: 'Minimum Sharpe ratio' }).click();
+      await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').click();
+      await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill(currentSRthreshold);
+      await page.locator('#eas-main-container').click();
+      await page.waitForSelector('#eas-navbar-portfolio-link');
+      await page.click('#eas-navbar-portfolio-link');
+  
+      isCriteriaMet = await analyzeBacktestResults2(page, NPthreshold, maxDrawdownThreshold, SRthreshold);
+  
+      if (!isCriteriaMet) {
+        // Increase the Sharpe Ratio threshold by SRincrement
+        currentSRthreshold += SRincrement;
+      }
+    }
+  
+    if (isCriteriaMet) {
+      // Criteria met, proceed with exporting portfolio and collection download
+      await downloadFiles();
+      // Uncheck performance filters
+        //Go to collection page
+      await page.waitForSelector('#eas-navbar-collection-link');
+      await page.click('#eas-navbar-collection-link');
+        //Uncheck performance filters
+      await page.getByLabel('Use performance filters.').uncheck();
+      // Download unfiltered collection again
+      await downloadFiles();
+    } else {
+      // Criteria not met, perform the steps you've described in scenario 'e'
+      // Download filtered collection
+      await downloadFiles();
+      // Delete portfolio and collection
+      await clearPortfolio();
+      await clearCollection();
+      // Upload the downloaded collection
+      await uploadCollection();
+      // Adjust sharp ratio in acceptance criteria
+      await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').click();
+      await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill(currentSRthreshold-0.02);
+      // Check other settings
+      // Start the reactor
+      await RunOrStopReactor();
+    }
+  }
+  //<------------------------------End: Strategies---------------------------->
 
 
   // <--------------------Scenario 1: Strategies < 30---------------------->
-  await page.waitForTimeout(1000*60*60*0.05); // 2 hours after reactors been running
+  
 
   // Get the value from collection notification
   const producedStrategies = await page.$eval('#eas-collection-notification', element => element.textContent.trim());
 
   if (producedStrategies <= 30) {
     console.log("No. of strategies produced: ", producedStrategies);
-  } else {
+    await strategyOne();
+  } else if(producedStrategies<=150){
     console.log("No. of strategies produced: ", producedStrategies);
+  } else if(producedStrategies <= 240){
+    console.log("No. of strategies produced: ", producedStrategies);
+    await strategyThree();
   }
 
-  // <-----------------------Add strategies to Portfolio and do checkup; After 12 hours------------------------->
-  // await page.waitForTimeout(1000*60*60*12); // 12 hours
-
-  await page.waitForSelector('#eas-navbar-collection-link');
-  await page.click('#eas-navbar-collection-link');
-  await page.waitForTimeout(3000);
   
-  await page.getByRole('button', { name: '+ Portfolio' }).click();
-  await page.waitForTimeout(3000);
-  await page.getByRole('link', { name: 'Add all' }).click();
-  await page.waitForTimeout(3000);
-  await page.waitForSelector('#eas-navbar-portfolio-link');
-  await page.click('#eas-navbar-portfolio-link');
-  await page.waitForTimeout(3000);
-  await page.getByRole('button', { name: 'Calculate' }).click();
 
   // <-----------------------After adding to the collection check NetProfit,MaxDrawdown,SharpRatio------------------------->
   async function analyzeBacktestResults(){
@@ -173,99 +347,47 @@ const { chromium } = require('playwright');
 
   // await analyzeBacktestResults();
 
-  async function analyzeBacktestResults2() {
+  // async function analyzeBacktestResults2() {
   
-    await page.waitForSelector('#backtest-output-table');
+  //   await page.waitForSelector('#backtest-output-table');
   
-    const evaluateThreshold = (value, threshold) => value > threshold;
+  //   const evaluateThreshold = (value, threshold) => value > threshold;
   
-    const getValueAndThreshold = async (selector, threshold) => {
-      const valueText = await page.$eval(selector, element => element.textContent.trim());
-      const value = parseFloat(valueText.split(' ')[0].replace(',', ''));
-      return evaluateThreshold(value, threshold);
-    };
+  //   const getValueAndThreshold = async (selector, threshold) => {
+  //     const valueText = await page.$eval(selector, element => element.textContent.trim());
+  //     const value = parseFloat(valueText.split(' ')[0].replace(',', ''));
+  //     return evaluateThreshold(value, threshold);
+  //   };
   
-    const NPthreshold = 20000;
-    const isNetProfitGreater = await getValueAndThreshold('#backtest-profit', NPthreshold);
+  //   const NPthreshold = 20000;
+  //   const isNetProfitGreater = await getValueAndThreshold('#backtest-profit', NPthreshold);
   
-    const MDthreshold = 20;
-    const isMaxDrawdownLess = await getValueAndThreshold('#backtest-drawdown-percent', MDthreshold);
+  //   const MDthreshold = 20;
+  //   const isMaxDrawdownLess = await getValueAndThreshold('#backtest-drawdown-percent', MDthreshold);
   
-    const SRthreshold = 0.10;
-    const isSharpRatioGreater = await getValueAndThreshold('#backtest-sharpe-ratio', SRthreshold);
+  //   const SRthreshold = 0.10;
+  //   const isSharpRatioGreater = await getValueAndThreshold('#backtest-sharpe-ratio', SRthreshold);
   
-    return isNetProfitGreater && isMaxDrawdownLess && isSharpRatioGreater;
-  }
+  //   return isNetProfitGreater && isMaxDrawdownLess && isSharpRatioGreater;
+  // }
   
   const result = await analyzeBacktestResults2();
   console.log('All conditions met:', result);
   
   
-  //<----------------------Download Files Section---------------------->
-  //Export the portfolio and download the unfiltered collection
 
-  await page.waitForSelector('#portfolio-toolbar-export');
-  await page.click('#portfolio-toolbar-export');
-  await page.waitForSelector('#export-portfolio-expert-mt5');
-
-  // Wait for download to start
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.click('#export-portfolio-expert-mt5')
-  ]);
-
-  const downloadFolderPath = 'C:/Users/FCTwin1001/Downloads/automation_downloads/USDCHF/';
-  await fs.mkdir(downloadFolderPath, { recursive: true });
-  const suggestedFileName = download.suggestedFilename();
-  const fullDownloadPath = path.join(downloadFolderPath, suggestedFileName);
-  await download.saveAs(fullDownloadPath);
-  console.log('Download saved to:', fullDownloadPath);
-
-
-  await page.waitForSelector('#eas-navbar-collection-link');
-  await page.click('#eas-navbar-collection-link');
-  await page.waitForSelector('#download-collection');
-  await page.click('#download-collection');
-
-  const [collection_download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('link', { name: 'Collection', exact: true }).click()
-  ]);
-
-  await fs.mkdir(downloadFolderPath, { recursive: true });
-  const collectionFileName = collection_download.suggestedFilename();
-  const collectionDownloadPath = path.join(downloadFolderPath, collectionFileName);
-  await collection_download.saveAs(collectionDownloadPath);
-  console.log('Collected strategies saved to:', collectionDownloadPath);
-
-  console.log("Script1 download finished")
-
-
-  //<----------------------Download Files Section--------------------------->
 
   //<------------------------Start: Stop The Reactor----------------------------->
-  //Go to reactor page
-  await page.waitForSelector('#acquisition-link');
-  await page.click('#acquisition-link');
-  //Stop the reactor
-  await page.waitForSelector('#button-start-stop');
-  await page.click('#button-start-stop');
+
 
   //<------------------------End: Stop The Reactor------------------------------->
 
   //<-----------------------------Remove Porfolio and Collections-------------------------->
     //Go to portfolio page
-  await page.waitForSelector('#eas-navbar-portfolio-link');
-  await page.click('#eas-navbar-portfolio-link');
-    //Now, Delete the portfolio and collection
-  await page.waitForSelector('#remove-all-button');
-  await page.click('#remove-all-button');
-    // Go to collection page
-  await page.waitForSelector('#eas-navbar-collection-link');
-  await page.click('#eas-navbar-collection-link');
-    // Clear collections
-  await page.waitForSelector('#remove-all-button');
-  await page.click('#remove-all-button')
+
+
+    await clearPortfolio();
+    await clearCollection();
   //<-----------------------------Remove Porfolio and Collections-------------------------->
 
   //<----------------------Use Performance Filters-------------------------->
@@ -297,63 +419,11 @@ const { chromium } = require('playwright');
   //<----------------------End of performance filters usage-------------------------->
 
   //<-------------------------Upload Files Section----------------------->
+
     //Go to collections page
-  await page.waitForSelector('#eas-navbar-collection-link');
-  await page.click('#eas-navbar-collection-link');
-    //Click upload button
-  // await page.waitForSelector('#upload-button');
-
-  const fileInput = await page.$('#upload-button'); // Replace with your file input selector
-  await fileInput.setInputFiles(collectionDownloadPath);
-    
-
+  await uploadCollection();
     
   //<------------------------End-Upload Files Section--------------------->
-
-
-  // if(SharpRatio>SRthreshold && MaxDrawdownPercentValue>MDthreshold && netProfitValue>NPthreshold){
-  //   //<-----------------Section 1-------------------->
-  //   //Export the portfolio and download the unfiltered collection
-  //   await page.waitForSelector('#portfolio-toolbar-export');
-  //   await page.click('#portfolio-toolbar-export');
-  //   await page.waitForSelector('#export-portfolio-expert-mt5');
-  //   await page.click('#export-portfolio-expert-mt5');
-
-  //   //<-----------------Section 2-------------------->
-  //   //Verify in the downloads folder that both files for that currency pair and time frame are downloaded
-  //   // const expectedFileName1 = 'your-expected-file-name1.extension';
-  //   // const expectedFileName2 = 'your-expected-file-name2.extension';
-  //   // const downloadDirectory = 'path-to-your-download-directory';
-
-  //   // // Wait for a reasonable time for the download to complete
-  //   // await page.waitForTimeout(10000); // Adjust the timeout as needed
-
-  //   // // Check if both expected files are downloaded
-  //   // const file1Downloaded = fs.existsSync(path.join(downloadDirectory, expectedFileName1));
-  //   // const file2Downloaded = fs.existsSync(path.join(downloadDirectory, expectedFileName2));
-
-  //   // if (file1Downloaded && file2Downloaded) {
-  //   //     console.log('Both files have been downloaded successfully.');
-  //   // } else {
-  //   //     console.log('One or both files might have failed to download.');
-  //   // }
-    
-  //   //<-----------------Section 3-------------------->
-    
-  //   //Now, Delete the portfolio and collection
-  //   await page.waitForSelector('#remove-all-button');
-  //   await page.click('#remove-all-button');
-  //   // Go to collection page
-  //   await page.waitForSelector('#eas-navbar-collection-link');
-  //   await page.click('#eas-navbar-collection-link');
-  //   // Clear collections
-  //   await page.waitForSelector('#remove-all-button');
-  //   await page.click('#remove-all-button')
-    
-  // }else{
-  //   //Check performance filters
-  // }
-  
 
 
   // <---------Uncomment below if browser needed to be closed------------>
