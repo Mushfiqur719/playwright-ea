@@ -5,6 +5,7 @@ const { chromium } = require("playwright");
 (async () => {
   const browser = await chromium.launch({
     headless: false,
+    slowMo: 600,
     // channel: "msedge",
   });
 
@@ -15,24 +16,68 @@ const { chromium } = require("playwright");
   //   channel: "msedge"
   // });
 
+  const PFthreshold = 2;
+  const NPthreshold = 50000;
+  const maxDrawdownThreshold = 10;
+  const SRthreshold = 0.1;
+
   const context = await browser.newContext({
     storageState: "auth.json",
   });
 
   const page = await context.newPage();
+  const collection = "Strategy Collection 54 GBPCAD H1.json";
+  const Path = "C:/Users/FCTwin1001/Downloads/automation_downloads/Collections";
+  let initCollectionDownloadPath = `${Path}/${collection}`;
 
   await page.goto("https://expert-advisor-studio.com/");
   await page.getByLabel("Theme").selectOption("dark");
+  await page.waitForTimeout(3000);
 
-  // <------------------------Initial Setup------------------------->
-  async function RunOrStopReactor() {
-    //Go to reactor page
-    await page.waitForSelector("#acquisition-link");
-    await page.click("#acquisition-link");
-    //Stop the reactor
-    await page.waitForSelector("#button-start-stop");
-    await page.click("#button-start-stop");
+  function getFileNames(collection) {
+    const regex = /([A-Z]+[A-Za-z]*\d+)/g;
+    const matches = collection.match(regex);
+  
+    if (matches && matches.length >= 2) {
+      const symbol = matches[0];
+      const period = matches[1];
+  
+      return { symbol, period };
+    } else {
+      return { symbol: null, period: null };
+    }
   }
+
+  
+
+
+
+
+  const result = getFileNames(collection);
+  
+  console.log(result.symbol);   // Output: GBPCAD
+  console.log(result.period); // Output: H1
+  
+
+  // async function getFileNames() {
+  //   const inputString = "Strategy Collection 54 GBPCAD H1.json"; // Example input string
+  //   const regex = /([A-Z]+\d+)/g;
+  //   const matches = inputString.match(regex);
+
+  //   if (matches && matches.length >= 2) {
+  //     const name1 = matches[0];
+  //     const name2 = matches[1];
+  //     console.log(name1); // Output: GBPCAD
+  //     console.log(name2); // Output: H1
+  //   } else {
+  //     console.log("No matches found.");
+  //   }
+
+  //   return{
+  //     pair:name1,
+  //     period:name2,
+  //   }
+  // }
 
   async function initialSetup() {
     await page
@@ -44,8 +89,9 @@ const { chromium } = require("playwright");
 
     // Change the Data Source, Symbol and Period here
     await page.getByLabel("Data source").selectOption("FXView-Demo");
-    await page.getByLabel("Symbol").selectOption("USDCHF");
-    await page.getByLabel("Period").selectOption("H1");
+    await page.getByLabel("Symbol").selectOption(`${result.symbol}`);
+    await page.getByLabel("Period").selectOption(`${result.period}`);
+
     // Strategy properties
     await page
       .locator("div")
@@ -84,12 +130,13 @@ const { chromium } = require("playwright");
     await page.getByLabel("Maximum data bars").click();
     await page.getByLabel("Maximum data bars").press("Control+a");
     await page.getByLabel("Maximum data bars").fill("200000");
-    await page.getByLabel("Start date", { exact: true }).fill("2022-08-21");
+    await page.getByLabel("Start date", { exact: true }).fill("2018-08-27");
     await page.getByLabel("Use start date limit").check();
     // Tools
     await page.getByRole("link", { name: "Tools" }).click();
     await page.getByLabel("Leverage").selectOption("1");
     await page.getByLabel("Collection capacity").selectOption("300");
+    //Acceptance criteria
     await page.getByRole("link", { name: "Acceptance Criteria" }).click();
     await page
       .locator("#validation-metrics-base div")
@@ -100,7 +147,7 @@ const { chromium } = require("playwright");
       .locator("#validation-metrics-base div")
       .filter({ hasText: /^Minimum net profit$/ })
       .getByRole("spinbutton")
-      .fill("50");
+      .fill("300");
     await page
       .locator("div")
       .filter({ hasText: /^Minimum count of trades$/ })
@@ -125,7 +172,7 @@ const { chromium } = require("playwright");
       .locator("div")
       .filter({ hasText: /^Minimum Sharpe ratio$/ })
       .getByRole("spinbutton")
-      .fill(".01");
+      .fill(".05");
 
     await page.getByRole("link", { name: "Strategy ID -" }).click();
     await page.getByRole("link", { name: "Monte Carlo" }).click();
@@ -174,68 +221,21 @@ const { chromium } = require("playwright");
     await page.getByRole("link", { name: "Reactor", exact: true }).click();
     await page.waitForTimeout(5000);
     await page.getByRole("button", { name: "Confirm" }).click();
-    await RunOrStopReactor();
-    await page.setViewportSize({ width: 550, height: 250 });
   }
 
-  // <------------------------End: Initial Setup------------------------->
-
-  async function analyzeBacktestResults2(
-    page,
-    NPthreshold,
-    maxDrawdownThreshold,
-    SRthreshold
-  ) {
-    await page.waitForSelector("#backtest-output-table");
-
-    const evaluateThreshold = (value, threshold) => value > threshold;
-
-    const getValueAndThreshold = async (selector, threshold) => {
-      const valueText = await page.$eval(selector, (element) =>
-        element.textContent.trim()
-      );
-      const value = parseFloat(valueText.split(" ")[0].replace(",", ""));
-      return evaluateThreshold(value, threshold);
-    };
-
-    const isNetProfitGreater = await getValueAndThreshold(
-      "#backtest-profit",
-      NPthreshold
-    );
-    const isMaxDrawdownLess = await getValueAndThreshold(
-      "#backtest-drawdown-percent",
-      maxDrawdownThreshold
-    );
-    const isSharpRatioGreater = await getValueAndThreshold(
-      "#backtest-sharpe-ratio",
-      SRthreshold
-    );
-
-    return isNetProfitGreater && isMaxDrawdownLess && isSharpRatioGreater;
-  }
-
-  async function clearPortfolio() {
-    await page.waitForSelector("#eas-navbar-portfolio-link");
-    await page.click("#eas-navbar-portfolio-link");
-    //Now, Delete the portfolio and collection
-    await page.waitForSelector("#remove-all-button");
-    await page.click("#remove-all-button");
-    console.log("Portfolio deleted");
-  }
-
-  async function clearCollection() {
-    // Go to collection page
-    await page.waitForSelector("#eas-navbar-collection-link");
-    await page.click("#eas-navbar-collection-link");
-    // Clear collections
-    await page.waitForSelector("#remove-all-button");
-    await page.click("#remove-all-button");
-    console.log("Collection Deleted");
+  async function RunOrStopReactor() {
+    //Go to reactor page
+    await page.waitForSelector("#acquisition-link");
+    await page.click("#acquisition-link");
+    //Stop the reactor
+    await page.waitForSelector("#button-start-stop");
+    await page.click("#button-start-stop");
   }
 
   //<----------------------Download Files Section---------------------->
   async function downloadFiles() {
     //Export the portfolio and download the unfiltered collection
+    await page.waitForTimeout(3000);
     await page.waitForSelector("#portfolio-toolbar-export");
     await page.click("#portfolio-toolbar-export");
     await page.waitForSelector("#export-portfolio-expert-mt5");
@@ -247,12 +247,15 @@ const { chromium } = require("playwright");
     ]);
 
     const downloadFolderPath =
-      "C:/Users/FCTwin1001/Downloads/automation_downloads/USDCHF/";
+      "C:/Users/FCTwin1001/Downloads/automation_downloads/";
     await fs.mkdir(downloadFolderPath, { recursive: true });
     const suggestedFileName = download.suggestedFilename();
-    const fullDownloadPath = path.join(downloadFolderPath, suggestedFileName);
-    await download.saveAs(fullDownloadPath);
-    console.log("Download saved to:", fullDownloadPath);
+    const portfolioDownloadPath = path.join(
+      downloadFolderPath,
+      suggestedFileName
+    );
+    await download.saveAs(portfolioDownloadPath);
+    console.log("Portfolio saved to:", portfolioDownloadPath);
 
     await page.waitForSelector("#eas-navbar-collection-link");
     await page.click("#eas-navbar-collection-link");
@@ -274,27 +277,201 @@ const { chromium } = require("playwright");
     console.log("Collected strategies saved to:", collectionDownloadPath);
 
     console.log("Script1 download finished");
+    return {
+      portfolioDownloadPath: portfolioDownloadPath,
+      collectionDownloadPath: collectionDownloadPath,
+    };
   }
 
-  //<----------------------End: Download Files Section--------------------------->
-
-  async function uploadCollection() {
+  async function uploadCollection(downloadPath) {
     await page.waitForSelector("#eas-navbar-collection-link");
     await page.click("#eas-navbar-collection-link");
-    await page
-      .locator("input[type='file']")
-      .setInputFiles(collectionDownloadPath);
+    await page.locator("input[type='file']").setInputFiles(downloadPath);
+    console.log("Files uploaded");
   }
 
-  async function strategyOne() {
-    //<-------------------Change the stop loss and take profit------------------->
+  async function clearPortfolio() {
+    await page.waitForSelector("#eas-navbar-portfolio-link");
+    await page.click("#eas-navbar-portfolio-link");
+    //Now, Delete the portfolio and collection
+    await page.waitForSelector("#remove-all-button");
+    await page.click("#remove-all-button");
+    console.log("Portfolio deleted");
+  }
+
+  async function addAllCollections() {
+    // Go to collection page
+    await page.waitForSelector("#eas-navbar-collection-link");
+    await page.click("#eas-navbar-collection-link");
+    await page.getByRole("button", { name: "+ Portfolio" }).click();
+    await page.getByRole("link", { name: "Add all" }).click();
+
+    // Go to portfolio
+    await page.waitForSelector("#eas-navbar-portfolio-link");
+    await page.click("#eas-navbar-portfolio-link");
+
+    // Calculate collections
+    await page.waitForSelector("#button-calculate");
+    await page.click("#button-calculate");
+    await page.waitForTimeout(30000);
+
+    console.log("Collections added to portfolio");
+  }
+
+  async function getCollectionNumber() {
+    // Get the value from collection notification
+    const producedStrategies = await page.$eval(
+      "#eas-collection-notification",
+      (element) => element.textContent.trim()
+    );
+
+    if (producedStrategies <= 30) {
+      console.log("No. of strategies produced: ", producedStrategies);
+      // await strategyOne();
+    } else if (producedStrategies <= 150) {
+      console.log("No. of strategies produced: ", producedStrategies);
+    } else if (producedStrategies <= 240) {
+      console.log("No. of strategies produced: ", producedStrategies);
+      // await strategyThree();
+    }
+  }
+
+  async function clearCollection() {
+    // Go to collection page
+    await page.waitForSelector("#eas-navbar-collection-link");
+    await page.click("#eas-navbar-collection-link");
+    // Clear collections
+    await page.waitForSelector("#remove-all-button");
+    await page.click("#remove-all-button");
+    console.log("Collection Deleted");
+  }
+
+  async function analyzeBacktestResults3(
+    page,
+    NPthreshold,
+    maxDrawdownThreshold,
+    SRthreshold,
+    PFthreshold
+  ) {
+    // Go to portfolio
+    await page.waitForSelector("#eas-navbar-portfolio-link");
+    await page.click("#eas-navbar-portfolio-link");
+    // // Calculate collections
+    // await page.waitForSelector('#button-calculate');
+    // await page.click('#button-calculate');
+    // await page.waitForTimeout(10000);
+
+    await page.waitForSelector("#backtest-output-table");
+
+    const evaluateThreshold = (value, threshold) => value > threshold;
+
+    const getValueAndThreshold = async (selector, threshold) => {
+      const valueText = await page.$eval(selector, (element) =>
+        element.textContent.trim()
+      );
+      const value = parseFloat(valueText.split(" ")[0].replace(",", ""));
+      return { value, meetsThreshold: evaluateThreshold(value, threshold) };
+    };
+
+    const { value: netProfit, meetsThreshold: isNetProfitGreater } =
+      await getValueAndThreshold("#backtest-profit", NPthreshold);
+    const { value: maxDrawdown, meetsThreshold: isMaxDrawdownLess } =
+      await getValueAndThreshold(
+        "#backtest-drawdown-percent",
+        maxDrawdownThreshold
+      );
+    const { value: sharpRatio, meetsThreshold: isSharpRatioGreater } =
+      await getValueAndThreshold("#backtest-sharpe-ratio", SRthreshold);
+    const { value: profitFactor, meetsThreshold: isProfitFactorGreater } =
+      await getValueAndThreshold("#backtest-profit-factor", PFthreshold);
+
+    console.log(
+      `Net Profit: ${netProfit} | Max Drawdown: ${maxDrawdown}% | Sharp Ratio: ${sharpRatio} | Profit Factor: ${profitFactor}`
+    );
+
+    return {
+      netProfit: netProfit,
+      maxDrawdown: maxDrawdown,
+      sharpRatio: sharpRatio,
+      profitFactor: profitFactor,
+      isProfitFactorGreater: isProfitFactorGreater,
+      isNetProfitGreater: isNetProfitGreater,
+      isMaxDrawdownLess: isMaxDrawdownLess,
+      isSharpRatioGreater: isSharpRatioGreater,
+    };
+  }
+
+  async function updateSharpRatio(currentSRthreshold) {
+    await page.waitForSelector("#eas-navbar-collection-link");
+    await page.click("#eas-navbar-collection-link");
+
     await page
       .locator("div")
-      .filter({ hasText: /^2\. Strategy properties$/ })
+      .filter({ hasText: /^Minimum Sharpe ratio$/ })
+      .getByRole("spinbutton")
+      .fill(currentSRthreshold.toString());
+    await page.locator("#eas-main-container").click();
+  }
+
+  async function changeSharpRatioAcceptanceCriteria(SharpeRatio) {
+    await page.waitForSelector("#eas-navbar-tools-link");
+    await page.click("#eas-navbar-tools-link");
+    await page.waitForSelector("#eas-navbar-acceptance-criteria-link");
+    await page.click("#eas-navbar-acceptance-criteria-link");
+
+    await page
+      .locator("div")
+      .filter({ hasText: /^Minimum Sharpe ratio$/ })
+      .getByRole("spinbutton")
       .click();
-    await page.getByLabel("Stop Loss", { exact: true }).selectOption("1");
-    await page.getByLabel("Take Profit", { exact: true }).selectOption("1");
-    await RunOrStopReactor();
+    await page
+      .locator("div")
+      .filter({ hasText: /^Minimum Sharpe ratio$/ })
+      .getByRole("spinbutton")
+      .press("Control+A");
+    await page
+      .locator("div")
+      .filter({ hasText: /^Minimum Sharpe ratio$/ })
+      .getByRole("spinbutton")
+      .fill(SharpeRatio.toString());
+  }
+
+  async function activatePerformanceFilter() {
+    // Go to collection page
+    await page.waitForSelector("#eas-navbar-collection-link");
+    await page.click("#eas-navbar-collection-link");
+
+    await page.getByLabel("Sort collection by").selectOption("SharpeRatio");
+    await page.getByLabel("Use performance filters.").check();
+    await page
+      .locator("div")
+      .filter({ hasText: /^Minimum net profit$/ })
+      .locator("i")
+      .click();
+    await page
+      .getByRole("button", { name: "+ Add validation criteria" })
+      .click();
+    await page.getByRole("link", { name: "Minimum Sharpe ratio" }).click();
+    await page.getByRole("spinbutton").click();
+    await page.getByRole("spinbutton").press("Control+A");
+    await page.getByRole("spinbutton").fill("0.07");
+    await page.locator("#eas-main-container").click();
+  }
+
+  async function checkPerformanceFilter() {
+    // Go to collection page
+    await page.waitForSelector("#eas-navbar-collection-link");
+    await page.click("#eas-navbar-collection-link");
+
+    await page.getByLabel("Use performance filters.").check();
+  }
+
+  async function uncheckPerformanceFilter() {
+    // Go to collection page
+    await page.waitForSelector("#eas-navbar-collection-link");
+    await page.click("#eas-navbar-collection-link");
+
+    await page.getByLabel("Use performance filters.").uncheck();
   }
 
   async function strategyThree(page) {
@@ -383,29 +560,26 @@ const { chromium } = require("playwright");
   }
 
   await initialSetup();
-  await page.waitForTimeout(1000 * 60 * 60 * 2); // Set the timer for checkup
-  await RunOrStopReactor();
-
-  // Get the value from collection notification
-  const producedStrategies = await page.$eval(
-    "#eas-collection-notification",
-    (element) => element.textContent.trim()
+  await uploadCollection(initCollectionDownloadPath);
+  await addAllCollections();
+  console.log(
+    await analyzeBacktestResults3(
+      page,
+      NPthreshold,
+      maxDrawdownThreshold,
+      SRthreshold,
+      PFthreshold
+    )
   );
-
-  if (producedStrategies <= 30) {
-    console.log("No. of strategies produced: ", producedStrategies);
-    await strategyOne();
-  } else if (producedStrategies <= 150) {
-    console.log("No. of strategies produced: ", producedStrategies);
-  } else if (producedStrategies <= 240) {
-    console.log("No. of strategies produced: ", producedStrategies);
-    await strategyThree();
-  }else if(producedStrategies > 240){
-    console.log("No. of strategies produced: ", producedStrategies);
-    await strategyFour();
-  }
-
-  // <---------Uncomment below if browser needed to be closed------------>
-  // await context.close();
-  // await browser.close();
+  console.log(await getCollectionNumber());
+  console.log(
+    await analyzeBacktestResults3(
+      page,
+      NPthreshold,
+      maxDrawdownThreshold,
+      SRthreshold,
+      PFthreshold
+    )
+  );
+  await strategyThree(page);
 })();
