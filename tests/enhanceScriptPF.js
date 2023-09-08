@@ -6,7 +6,7 @@ const { chromium } = require('playwright');
   const browser = await chromium.launch({
     headless: false,
     //========> Change the number below to slowdown or go faster(lesser to go faster)
-    slowMo:600,
+    slowMo: 600,
     // channel: "msedge",
   });
   
@@ -32,9 +32,9 @@ const { chromium } = require('playwright');
   //<--------------------------Start Here-------------------------------->
   
   //======> Change this line for a new collection
-  const collection = 'Strategy Collection 54 GBPCAD H1.json';
+  const collection = 'Strategy Collection 279 GBPAUD H1 FXView-Demo; .json';
   //======> Copy the path of the collection and change backslashe with forward slash
-  const Path = 'C:/Users/FCTwin1001/Downloads/automation_downloads/Collections';
+  const Path = 'C:/Users/FCTwin1001/Downloads/automation_downloads/Collections/FXView-Demo';
   //======> Set the path to download files here
   const downloadFolderPath = 'C:/Users/FCTwin1001/Downloads/automation_downloads/';
 
@@ -67,7 +67,7 @@ if (matches && matches.length >= 2) {
     //=====> Change the Data Source here
     await page.getByLabel('Data source').selectOption('FXView-Demo');
     //=====> Change the Symbol here
-    await page.getByLabel('Symbol').selectOption('GBPCAD');
+    await page.getByLabel('Symbol').selectOption('GBPAUD');
     //=====> Change the  Period here
     await page.getByLabel('Period').selectOption('H1');
 
