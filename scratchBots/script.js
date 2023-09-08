@@ -20,6 +20,7 @@ const { chromium } = require("playwright");
   });
 
   const page = await context.newPage();
+  const runningTime = 2;
 
   await page.goto("https://expert-advisor-studio.com/");
   await page.getByLabel("Theme").selectOption("dark");
@@ -233,7 +234,7 @@ const { chromium } = require("playwright");
     console.log("Collection Deleted");
   }
 
-  //<----------------------Download Files Section---------------------->
+
   async function downloadFiles() {
     //Export the portfolio and download the unfiltered collection
     await page.waitForSelector("#portfolio-toolbar-export");
@@ -276,7 +277,7 @@ const { chromium } = require("playwright");
     console.log("Script1 download finished");
   }
 
-  //<----------------------End: Download Files Section--------------------------->
+
 
   async function uploadCollection() {
     await page.waitForSelector("#eas-navbar-collection-link");
@@ -379,6 +380,44 @@ const { chromium } = require("playwright");
         await uncheckPerformanceFilter();
         await downloadFiles();
       }
+    }
+  }
+
+  async function strategyFour(page) {
+    const PFthreshold = 2;
+    const NPthreshold = 50000;
+    const SRthreshold = 0.1;
+    const maxDrawdownThreshold = 10;
+    const initialSRthreshold = 0.15;
+    const maxSRthreshold = 0.5;
+    const SRincrement = 0.05;
+
+    let currentSRthreshold = initialSRthreshold;
+    let isCriteriaMet = false;
+
+    let analysisResults = await analyzeBacktestResults3(
+      page,
+      NPthreshold,
+      maxDrawdownThreshold,
+      SRthreshold,
+      PFthreshold
+    );
+
+    if (analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater) {
+      await activatePerformanceFilter();
+      let strategies = await getStrategies();
+      while(strategies<90){
+        currentSRthreshold = currentSRthreshold+SRincrement;
+        await updateSharpRatio(currentSRthreshold);
+        strategies = await getStrategies();
+      }
+
+      await downloadFiles();
+      await clearCollection();
+      await clearPortfolio();
+      await uploadCollection();
+      await changeSharpRatioAcceptanceCriteria(currentSRthreshold);
+      await RunOrStopReactor();
     }
   }
 
