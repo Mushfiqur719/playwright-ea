@@ -5,11 +5,12 @@ const { chromium } = require("playwright");
 (async () => {
   const browser = await chromium.launch({
     headless: false,
+    //========> Change the number below to slowdown or go faster(lesser to go faster)
     slowMo: 600,
     // channel: "msedge",
   });
 
-  //<-------------------To Open in non-incognito mode----------------------->
+  //<-------------------To Open in non-incognito mode(Under Development)----------------------->
   // const browser = await chromium.launchPersistentContext('C:/Users/mushf/AppData/Local/Microsoft/Edge/User Data/Default', {
   //   headless: false,  // Set to true for headless mode, false for visible window
   //   // slowMo: 50,       // Slow down actions by 50ms (for better visualization)
@@ -17,7 +18,7 @@ const { chromium } = require("playwright");
   // });
 
   const PFthreshold = 2;
-  const NPthreshold = 50000;
+  const NPthreshold = 30000;
   const maxDrawdownThreshold = 10;
   const SRthreshold = 0.1;
 
@@ -26,58 +27,36 @@ const { chromium } = require("playwright");
   });
 
   const page = await context.newPage();
-  const collection = "Strategy Collection 54 GBPCAD H1.json";
-  const Path = "C:/Users/FCTwin1001/Downloads/automation_downloads/Collections";
+
+  //<--------------------------Start Here-------------------------------->
+
+  //======> Change this line for a new collection
+  const collection = "Strategy Collection 279 GBPAUD H1 FXView-Demo; .json";
+  //======> Copy the path of the collection and change backslashe with forward slash
+  const Path = "C:/Users/FCTwin1001/Downloads/automation_downloads/Collections/FXView-Demo";
+  //======> Set Download Path Here
+  const downloadFolderPath = "C:/Users/FCTwin1001/Downloads/automation_downloads/";
+
   let initCollectionDownloadPath = `${Path}/${collection}`;
 
   await page.goto("https://expert-advisor-studio.com/");
   await page.getByLabel("Theme").selectOption("dark");
   await page.waitForTimeout(3000);
 
-  function getFileNames(collection) {
-    const regex = /([A-Z]+[A-Za-z]*\d+)/g;
-    const matches = collection.match(regex);
-  
+  async function getFileNames() {
+    const inputString = "Strategy Collection 54 GBPCAD H1.json"; // Example input string
+    const regex = /([A-Z]+\d+)/g;
+    const matches = inputString.match(regex);
+
     if (matches && matches.length >= 2) {
-      const symbol = matches[0];
-      const period = matches[1];
-  
-      return { symbol, period };
+      const name1 = matches[0];
+      const name2 = matches[1];
+      console.log(name1); // Output: GBPCAD
+      console.log(name2); // Output: H1
     } else {
-      return { symbol: null, period: null };
+      console.log("No matches found.");
     }
   }
-
-  
-
-
-
-
-  const result = getFileNames(collection);
-  
-  console.log(result.symbol);   // Output: GBPCAD
-  console.log(result.period); // Output: H1
-  
-
-  // async function getFileNames() {
-  //   const inputString = "Strategy Collection 54 GBPCAD H1.json"; // Example input string
-  //   const regex = /([A-Z]+\d+)/g;
-  //   const matches = inputString.match(regex);
-
-  //   if (matches && matches.length >= 2) {
-  //     const name1 = matches[0];
-  //     const name2 = matches[1];
-  //     console.log(name1); // Output: GBPCAD
-  //     console.log(name2); // Output: H1
-  //   } else {
-  //     console.log("No matches found.");
-  //   }
-
-  //   return{
-  //     pair:name1,
-  //     period:name2,
-  //   }
-  // }
 
   async function initialSetup() {
     await page
@@ -87,10 +66,12 @@ const { chromium } = require("playwright");
       .click();
     await page.getByRole("link", { name: "Reactor", exact: true }).click();
 
-    // Change the Data Source, Symbol and Period here
+    //=====> Change the Data Source here
     await page.getByLabel("Data source").selectOption("FXView-Demo");
-    await page.getByLabel("Symbol").selectOption(`${result.symbol}`);
-    await page.getByLabel("Period").selectOption(`${result.period}`);
+    //=====> Change the Symbol here
+    await page.getByLabel("Symbol").selectOption("GBPCAD");
+    //=====> Change the  Period here
+    await page.getByLabel("Period").selectOption("H1");
 
     // Strategy properties
     await page
@@ -124,7 +105,8 @@ const { chromium } = require("playwright");
       .getByLabel("Generate strategies with\nPreset Indicators")
       .uncheck();
     await page.getByLabel("Working minutes").click();
-    await page.getByLabel("Working minutes").fill("120");
+    // Change the time here
+    await page.getByLabel("Working minutes").fill("720");
     await page.getByRole("link", { name: "Data", exact: true }).click();
     await page.getByRole("link", { name: "Data Horizon" }).click();
     await page.getByLabel("Maximum data bars").click();
@@ -246,8 +228,6 @@ const { chromium } = require("playwright");
       page.click("#export-portfolio-expert-mt5"),
     ]);
 
-    const downloadFolderPath =
-      "C:/Users/FCTwin1001/Downloads/automation_downloads/";
     await fs.mkdir(downloadFolderPath, { recursive: true });
     const suggestedFileName = download.suggestedFilename();
     const portfolioDownloadPath = path.join(
@@ -313,12 +293,12 @@ const { chromium } = require("playwright");
     // Calculate collections
     await page.waitForSelector("#button-calculate");
     await page.click("#button-calculate");
-    await page.waitForTimeout(30000);
+    await page.waitForTimeout(50000);
 
     console.log("Collections added to portfolio");
   }
 
-  async function getCollectionNumber() {
+  async function getStrategies() {
     // Get the value from collection notification
     const producedStrategies = await page.$eval(
       "#eas-collection-notification",
@@ -333,6 +313,9 @@ const { chromium } = require("playwright");
     } else if (producedStrategies <= 240) {
       console.log("No. of strategies produced: ", producedStrategies);
       // await strategyThree();
+    }
+    return{
+      producedStrategies:producedStrategies,
     }
   }
 
@@ -474,6 +457,17 @@ const { chromium } = require("playwright");
     await page.getByLabel("Use performance filters.").uncheck();
   }
 
+  async function strategyOne() {
+    //<-------------------Change the stop loss and take profit------------------->
+    await page
+      .locator("div")
+      .filter({ hasText: /^2\. Strategy properties$/ })
+      .click();
+    await page.getByLabel("Stop Loss", { exact: true }).selectOption("1");
+    await page.getByLabel("Take Profit", { exact: true }).selectOption("1");
+    await RunOrStopReactor();
+  }
+
   async function strategyThree(page) {
     const PFthreshold = 2;
     const NPthreshold = 50000;
@@ -559,9 +553,49 @@ const { chromium } = require("playwright");
     }
   }
 
+  async function strategyFour(page) {
+    const PFthreshold = 2;
+    const NPthreshold = 50000;
+    const SRthreshold = 0.1;
+    const maxDrawdownThreshold = 10;
+    const initialSRthreshold = 0.15;
+    const maxSRthreshold = 0.5;
+    const SRincrement = 0.05;
+
+    let currentSRthreshold = initialSRthreshold;
+    let isCriteriaMet = false;
+
+    let analysisResults = await analyzeBacktestResults3(
+      page,
+      NPthreshold,
+      maxDrawdownThreshold,
+      SRthreshold,
+      PFthreshold
+    );
+
+    if (analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater) {
+      await activatePerformanceFilter();
+      let strategies = await getStrategies();
+      while(strategies<90){
+        currentSRthreshold = currentSRthreshold+SRincrement;
+        await updateSharpRatio(currentSRthreshold);
+        strategies = await getStrategies();
+      }
+
+      await downloadFiles();
+      await clearCollection();
+      await clearPortfolio();
+      await uploadCollection();
+      await changeSharpRatioAcceptanceCriteria(currentSRthreshold);
+      await RunOrStopReactor();
+    }
+  }
+
+
   await initialSetup();
   await uploadCollection(initCollectionDownloadPath);
   await addAllCollections();
+  console.log(await getStrategies());
   console.log(
     await analyzeBacktestResults3(
       page,
@@ -571,7 +605,20 @@ const { chromium } = require("playwright");
       PFthreshold
     )
   );
-  console.log(await getCollectionNumber());
+  console.log(await getStrategies());
+  let strategies = await getStrategies();
+  strategies = parseInt(strategies);
+  if (strategies < 30 ){
+    await strategyOne();
+  }else if(strategies >= 140){
+    await strategyTwo();
+  }else if(strategies>=240){
+    //StrategyThree
+    await strategyThree();
+  }else{
+    //StrategyFour
+    await strategyFour();
+  }
   console.log(
     await analyzeBacktestResults3(
       page,
@@ -581,5 +628,5 @@ const { chromium } = require("playwright");
       PFthreshold
     )
   );
-  await strategyThree(page);
+  await strategyFour(page);
 })();
