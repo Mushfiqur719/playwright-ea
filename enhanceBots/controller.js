@@ -6,7 +6,7 @@ async function delay(ms) {
 
 async function runScripts() {
   // const scriptFiles = ['scratchBots/script.js'];
-  const scriptFiles = ['enhanceBots/script.js', 'enhanceBots/script1.js','enhanceBots/script2.js', 'enhanceBots/script3.js'];
+  const scriptFiles = ['enhanceBots/eScriptPF.js', 'enhanceBots/eScriptPF1.js','enhanceBots/eScriptPF2.js'];
 
   for (const file of scriptFiles) {
     console.log(`Running ${file}...`);
