@@ -5,11 +5,12 @@ const { chromium } = require('playwright');
 (async () => {
   const browser = await chromium.launch({
     headless: false,
-    slowMo:100,
+    //========> Change the number below to slowdown or go faster(lesser to go faster)
+    slowMo:600,
     // channel: "msedge",
   });
   
-  //<-------------------To Open in non-incognito mode----------------------->
+  //<-------------------To Open in non-incognito mode(Under Development)----------------------->
   // const browser = await chromium.launchPersistentContext('C:/Users/mushf/AppData/Local/Microsoft/Edge/User Data/Default', {
   //   headless: false,  // Set to true for headless mode, false for visible window
   //   // slowMo: 50,       // Slow down actions by 50ms (for better visualization)
@@ -17,7 +18,8 @@ const { chromium } = require('playwright');
   // });
   
 
-  const NPthreshold = 50000;
+  const PFthreshold = 2;
+  const NPthreshold = 30000;
   const maxDrawdownThreshold = 10;
   const SRthreshold = 0.1;
 
@@ -26,15 +28,49 @@ const { chromium } = require('playwright');
   });
   
   const page = await context.newPage();
-  let collectionDownloadPath ='E:/Resources/EA/Mushfiqur/Archive/Promising/Strategy Collection 68 GBPCAD H1.json';
+
+  //<--------------------------Start Here-------------------------------->
+  
+  //======> Change this line for a new collection
+  const collection = 'Strategy Collection 54 GBPCAD H1.json';
+  //======> Copy the path of the collection and change backslashe with forward slash
+  const Path = 'C:/Users/FCTwin1001/Downloads/automation_downloads/Collections';
+  //======> Set the path to download files here
+  const downloadFolderPath = 'C:/Users/FCTwin1001/Downloads/automation_downloads/';
+
+  let initCollectionDownloadPath =`${Path}/${collection}`;
 
   await page.goto('https://expert-advisor-studio.com/');
   await page.getByLabel('Theme').selectOption('dark');
   await page.waitForTimeout(3000);
 
+  async function getFileNames(){
+    const inputString = "Strategy Collection 54 GBPCAD H1.json"; // Example input string
+const regex = /([A-Z]+\d+)/g;
+const matches = inputString.match(regex);
+
+if (matches && matches.length >= 2) {
+  const name1 = matches[0];
+  const name2 = matches[1];
+  console.log(name1); // Output: GBPCAD
+  console.log(name2); // Output: H1
+} else {
+  console.log("No matches found.");
+}
+
+  }
+
   async function initialSetup(){
     await page.getByRole('link', { name: 'Open the Generator, the Reactor, or the Validator' }).click();
     await page.getByRole('link', { name: 'Reactor', exact: true }).click();
+    
+    //=====> Change the Data Source here
+    await page.getByLabel('Data source').selectOption('FXView-Demo');
+    //=====> Change the Symbol here
+    await page.getByLabel('Symbol').selectOption('GBPCAD');
+    //=====> Change the  Period here
+    await page.getByLabel('Period').selectOption('H1');
+
     // Strategy properties
     await page.locator('div').filter({ hasText: /^2\. Strategy properties$/ }).click();
     await page.getByLabel('Entry lots').click();
@@ -59,7 +95,8 @@ const { chromium } = require('playwright');
     await page.getByLabel('Max exit indicators').selectOption('4');
     await page.getByLabel('Generate strategies with\nPreset Indicators').uncheck();
     await page.getByLabel('Working minutes').click();
-    await page.getByLabel('Working minutes').fill('120');
+    // Change the time here
+    await page.getByLabel('Working minutes').fill('720');
     await page.getByRole('link', { name: 'Data', exact: true }).click();
     await page.getByRole('link', { name: 'Data Horizon' }).click();
     await page.getByLabel('Maximum data bars').click();
@@ -71,9 +108,10 @@ const { chromium } = require('playwright');
     await page.getByRole('link', { name: 'Tools' }).click();
     await page.getByLabel('Leverage').selectOption('1');
     await page.getByLabel('Collection capacity').selectOption('300');
+    //Acceptance criteria
     await page.getByRole('link', { name: 'Acceptance Criteria' }).click();
     await page.locator('#validation-metrics-base div').filter({ hasText: /^Minimum net profit$/ }).getByRole('spinbutton').click();
-    await page.locator('#validation-metrics-base div').filter({ hasText: /^Minimum net profit$/ }).getByRole('spinbutton').fill('50');
+    await page.locator('#validation-metrics-base div').filter({ hasText: /^Minimum net profit$/ }).getByRole('spinbutton').fill('300');
     await page.locator('div').filter({ hasText: /^Minimum count of trades$/ }).getByRole('spinbutton').click();
     await page.locator('div').filter({ hasText: /^Minimum count of trades$/ }).getByRole('spinbutton').fill('50');
     await page.locator('#validation-metrics-base').getByRole('button', { name: '+ Add acceptance criteria' }).click();
@@ -92,7 +130,7 @@ const { chromium } = require('playwright');
     await page.getByLabel('Randomize backtest starting bar').check();
     await page.getByRole('link', { name: 'Validation' }).click();
     await page.locator('div').filter({ hasText: /^Minimum net profit$/ }).getByRole('spinbutton').click();
-    await page.locator('div').filter({ hasText: /^Minimum net profit$/ }).getByRole('spinbutton').fill('300');
+    await page.locator('div').filter({ hasText: /^Minimum net profit$/ }).getByRole('spinbutton').fill('50');
     await page.locator('div').filter({ hasText: /^Minimum count of trades$/ }).getByRole('spinbutton').click();
     await page.locator('div').filter({ hasText: /^Minimum count of trades$/ }).getByRole('spinbutton').fill('50');
     await page.getByRole('button', { name: '+ Add validation criteria' }).click();
@@ -127,12 +165,11 @@ const { chromium } = require('playwright');
         page.click('#export-portfolio-expert-mt5')
       ]);
     
-      const downloadFolderPath = 'E:/Resources/EA/Automation Downloads/';
       await fs.mkdir(downloadFolderPath, { recursive: true });
       const suggestedFileName = download.suggestedFilename();
-      const fullDownloadPath = path.join(downloadFolderPath, suggestedFileName);
-      await download.saveAs(fullDownloadPath);
-      console.log('Download saved to:', fullDownloadPath);
+      const portfolioDownloadPath = path.join(downloadFolderPath, suggestedFileName);
+      await download.saveAs(portfolioDownloadPath);
+      console.log('Portfolio saved to:', portfolioDownloadPath);
     
       await page.waitForSelector('#eas-navbar-collection-link');
       await page.click('#eas-navbar-collection-link');
@@ -151,12 +188,16 @@ const { chromium } = require('playwright');
       console.log('Collected strategies saved to:', collectionDownloadPath);
     
       console.log("Script1 download finished");
+      return{
+        portfolioDownloadPath: portfolioDownloadPath,
+        collectionDownloadPath: collectionDownloadPath
+      };
     }
 
-  async function uploadCollection(collectionDownloadPath){
+  async function uploadCollection(downloadPath){
     await page.waitForSelector('#eas-navbar-collection-link');
     await page.click('#eas-navbar-collection-link');
-    await page.locator("input[type='file']").setInputFiles(collectionDownloadPath);
+    await page.locator("input[type='file']").setInputFiles(downloadPath);
     console.log('Files uploaded');
   }
 
@@ -175,6 +216,16 @@ const { chromium } = require('playwright');
     await page.click('#eas-navbar-collection-link');
     await page.getByRole('button', { name: '+ Portfolio' }).click();
     await page.getByRole('link', { name: 'Add all' }).click();
+
+    // Go to portfolio
+    await page.waitForSelector('#eas-navbar-portfolio-link');
+    await page.click('#eas-navbar-portfolio-link');
+
+    // Calculate collections
+    await page.waitForSelector('#button-calculate');
+    await page.click('#button-calculate');
+    await page.waitForTimeout(50000);
+    
     console.log('Collections added to portfolio');
   }
 
@@ -203,114 +254,14 @@ const { chromium } = require('playwright');
     console.log("Collection Deleted");
   }
 
-//   async function analyzeBacktestResults2(page, NPthreshold, maxDrawdownThreshold, SRthreshold) {
-//     // Go to portfolio
-//     await page.waitForSelector('#eas-navbar-portfolio-link');
-//     await page.click('#eas-navbar-portfolio-link');
-//     // Calculate collections
-//     await page.waitForSelector('#button-calculate');
-//     await page.click('#button-calculate');
-//     await page.waitForTimeout(5000);
-
-//     await page.waitForSelector('#backtest-output-table');
-
-//     const evaluateThreshold = (value, threshold) => value > threshold;
-
-//     const getValueAndThreshold = async (selector, threshold) => {
-//         const valueText = await page.$eval(selector, element => element.textContent.trim());
-//         const value = parseFloat(valueText.split(' ')[0].replace(',', ''));
-//         return { value, meetsThreshold: evaluateThreshold(value, threshold) };
-//     };
-
-//     const { value: netProfit, meetsThreshold: isNetProfitGreater } = await getValueAndThreshold('#backtest-profit', NPthreshold);
-//     const { value: maxDrawdown, meetsThreshold: isMaxDrawdownLess } = await getValueAndThreshold('#backtest-drawdown-percent', maxDrawdownThreshold);
-//     const { value: sharpRatio, meetsThreshold: isSharpRatioGreater } = await getValueAndThreshold('#backtest-sharpe-ratio', SRthreshold);
-
-//     console.log(`Net Profit: ${netProfit} | Max Drawdown: ${maxDrawdown}% | Sharp Ratio: ${sharpRatio}`);
-
-//     return isNetProfitGreater && isMaxDrawdownLess && isSharpRatioGreater;
-// }
-
-
-//   async function strategyThree(page) {
-//     //Go to collection page
-//     await page.waitForSelector('#eas-navbar-collection-link');
-//     await page.click('#eas-navbar-collection-link');
-//     //Check performance filters
-//     await page.getByLabel('Sort collection by').selectOption('SharpeRatio');
-//     await page.getByLabel('Use performance filters.').check();
-//     await page.getByRole('button', { name: '+ Add validation criteria' }).click();
-//     await page.getByRole('link', { name: 'Minimum Sharpe ratio' }).click();
-
-//     console.log('starting strategy three');
-//     const initialSRthreshold = 0.07;
-//     const maxSRthreshold = 0.5;
-//     const SRincrement = 0.02;
-
-//     let currentSRthreshold = initialSRthreshold;
-//     let isCriteriaMet = false;
-
-//     while (!isCriteriaMet && currentSRthreshold <= maxSRthreshold) {
-//         //Go to collection page
-//         await page.waitForSelector('#eas-navbar-collection-link');
-//         await page.click('#eas-navbar-collection-link');
-
-//         await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill(currentSRthreshold.toString());
-//         await page.locator('#eas-main-container').click();
-//         await page.waitForSelector('#eas-navbar-portfolio-link');
-//         await page.click('#eas-navbar-portfolio-link');
-
-//         isCriteriaMet = await analyzeBacktestResults2(page, NPthreshold, maxDrawdownThreshold, currentSRthreshold);
-
-//         if (!isCriteriaMet) {
-//             // Increase the Sharpe Ratio threshold by SRincrement
-//             currentSRthreshold += SRincrement;
-//             console.log(`files incremented to ${currentSRthreshold}`);
-//         }
-//     }
-
-//     if (isCriteriaMet) {
-//         // Criteria met, proceed with exporting portfolio and collection download
-//         await downloadFiles();
-//         console.log('Files downloaded');
-//         // Uncheck performance filters
-//         // Go to collection page
-//         await page.waitForSelector('#eas-navbar-collection-link');
-//         await page.click('#eas-navbar-collection-link');
-//         // Uncheck performance filters
-//         await page.getByLabel('Use performance filters.').uncheck();
-//         // Download unfiltered collection again
-//         await downloadFiles();
-//         // Export Portfolio
-//         await exportPortfolio();
-//         // Uncheck performance filters
-//         await page.getByLabel('Use performance filters.').uncheck();
-//         // Download unfiltered collection again
-//         await downloadFiles();
-//         // Portfolio has graduated
-//     } else {
-//         // Criteria not met, perform the steps you've described in scenario 'e'
-//         // Download filtered collection
-//         await downloadFiles();
-//         // Delete portfolio and collection
-//         await clearPortfolio();
-//         await clearCollection();
-//         // Upload the downloaded collection
-
-//         // Adjust sharp ratio in acceptance criteria
-//         // Check other settings
-//         // Start the reactor
-//     }
-// }
-
-async function analyzeBacktestResults3(page, NPthreshold, maxDrawdownThreshold, SRthreshold) {
+async function analyzeBacktestResults3(page, NPthreshold, maxDrawdownThreshold, SRthreshold, PFthreshold) {
     // Go to portfolio
     await page.waitForSelector('#eas-navbar-portfolio-link');
     await page.click('#eas-navbar-portfolio-link');
-    // Calculate collections
-    await page.waitForSelector('#button-calculate');
-    await page.click('#button-calculate');
-    await page.waitForTimeout(5000);
+    // // Calculate collections
+    // await page.waitForSelector('#button-calculate');
+    // await page.click('#button-calculate');
+    // await page.waitForTimeout(10000);
 
     await page.waitForSelector('#backtest-output-table');
 
@@ -325,13 +276,16 @@ async function analyzeBacktestResults3(page, NPthreshold, maxDrawdownThreshold, 
     const { value: netProfit, meetsThreshold: isNetProfitGreater } = await getValueAndThreshold('#backtest-profit', NPthreshold);
     const { value: maxDrawdown, meetsThreshold: isMaxDrawdownLess } = await getValueAndThreshold('#backtest-drawdown-percent', maxDrawdownThreshold);
     const { value: sharpRatio, meetsThreshold: isSharpRatioGreater } = await getValueAndThreshold('#backtest-sharpe-ratio', SRthreshold);
+    const { value: profitFactor, meetsThreshold: isProfitFactorGreater } = await getValueAndThreshold('#backtest-profit-factor', PFthreshold);
 
-    console.log(`Net Profit: ${netProfit} | Max Drawdown: ${maxDrawdown}% | Sharp Ratio: ${sharpRatio}`);
+    console.log(`Net Profit: ${netProfit} | Max Drawdown: ${maxDrawdown}% | Sharp Ratio: ${sharpRatio} | Profit Factor: ${profitFactor}`);
 
     return {
         netProfit: netProfit,
         maxDrawdown: maxDrawdown,
         sharpRatio: sharpRatio,
+        profitFactor: profitFactor,
+        isProfitFactorGreater: isProfitFactorGreater,
         isNetProfitGreater: isNetProfitGreater,
         isMaxDrawdownLess: isMaxDrawdownLess,
         isSharpRatioGreater: isSharpRatioGreater
@@ -346,15 +300,15 @@ async function updateSharpRatio(currentSRthreshold){
         await page.locator('#eas-main-container').click();
 }
 
-async function changeSharpRatioAcceptanceCriteria(SharptRatio){
+async function changeSharpRatioAcceptanceCriteria(SharpeRatio){
   await page.waitForSelector('#eas-navbar-tools-link');
   await page.click('#eas-navbar-tools-link');
   await page.waitForSelector('#eas-navbar-acceptance-criteria-link');
   await page.click('#eas-navbar-acceptance-criteria-link');
 
   await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').click();
-  await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').press('Control+Shift+ArrowLeft');
-  await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill(SharpRatio.toString());
+  await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').press('Control+A');
+  await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill(SharpeRatio.toString());
 }
 
 async function activatePerformanceFilter(){
@@ -368,92 +322,33 @@ async function activatePerformanceFilter(){
   await page.getByRole('button', { name: '+ Add validation criteria' }).click();
   await page.getByRole('link', { name: 'Minimum Sharpe ratio' }).click();
   await page.getByRole('spinbutton').click();
-  await page.getByRole('spinbutton').press('Control+Shift+ArrowLeft');
+  await page.getByRole('spinbutton').press('Control+A');
   await page.getByRole('spinbutton').fill('0.07');
   await page.locator('#eas-main-container').click();
 
 }
 
+async function checkPerformanceFilter(){
+  // Go to collection page
+  await page.waitForSelector('#eas-navbar-collection-link');
+  await page.click('#eas-navbar-collection-link');
 
-// async function strategyThree(page) {
-//     const NPthreshold = 20000;
-//     const maxDrawdownThreshold = 20;
-//     const initialSRthreshold = 0.07;
-//     const maxSRthreshold = 0.5;
-//     const SRincrement = 0.02;
+  await page.getByLabel('Use performance filters.').check();
+}
 
-//     let currentSRthreshold = initialSRthreshold;
-//     let isCriteriaMet = false;
+async function uncheckPerformanceFilter(){
+  // Go to collection page
+  await page.waitForSelector('#eas-navbar-collection-link');
+  await page.click('#eas-navbar-collection-link');
 
-//     while (!isCriteriaMet && currentSRthreshold <= maxSRthreshold) {
-//         // Go to collection page
-//         await page.waitForSelector('#eas-navbar-collection-link');
-//         await page.click('#eas-navbar-collection-link');
+  await page.getByLabel('Use performance filters.').uncheck();
+}
 
-//         await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill(currentSRthreshold.toString());
-//         await page.locator('#eas-main-container').click();
-//         await page.waitForSelector('#eas-navbar-portfolio-link');
-//         await page.click('#eas-navbar-portfolio-link');
-
-//         isCriteriaMet = await analyzeBacktestResults2(page, NPthreshold, maxDrawdownThreshold, currentSRthreshold);
-
-//         if (!isCriteriaMet) {
-//             // Increase the Sharpe Ratio threshold by SRincrement
-//             currentSRthreshold += SRincrement;
-//             console.log(`Sharpe Ratio threshold incremented to ${currentSRthreshold}`);
-//         }
-//     }
-
-//     if (isCriteriaMet) {
-//         // Criteria met, proceed with exporting portfolio and collection download
-//         await downloadFiles();
-//         // Delete collection and portfolio
-//         await deleteCollection();
-//         await deletePortfolio();
-//     } else {
-//         // Criteria not met, perform the steps described
-//         // Open the Collection Menu and Check "Use Performance Filters"
-//         await page.waitForSelector('#eas-navbar-collection-link');
-//         await page.click('#eas-navbar-collection-link');
-//         await page.waitForTimeout(5000);
-
-//         await page.getByLabel('Use performance filters.').check();
-//         console.log('Checked performance filters')
-//         await page.locator('div').filter({ hasText: /^Minimum net profit$/ }).locator('i').click();
-//         await page.getByRole('button', { name: '+ Add validation criteria' }).click();
-//         await page.getByRole('link', { name: 'Minimum Sharpe ratio' }).click();
-      
-
-
-//         // Loop to adjust Sharpe Ratio and Max Drawdown
-//         while (!isCriteriaMet && currentSRthreshold <= maxSRthreshold) {
-
-//             await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill(currentSRthreshold.toString());
-//             await page.locator('#eas-main-container').click();
-//             await page.waitForSelector('#eas-navbar-portfolio-link');
-//             await page.click('#eas-navbar-portfolio-link');
-
-//             isCriteriaMet = await analyzeBacktestResults2(page, NPthreshold, maxDrawdownThreshold, currentSRthreshold);
-
-//             if (!isCriteriaMet) {
-//                 currentSRthreshold += SRincrement;
-//                 console.log(`Sharpe Ratio threshold incremented to ${currentSRthreshold}`);
-//             }
-//         }
-
-//         if (!isCriteriaMet && currentSRthreshold > maxSRthreshold) {
-//             // Perform the steps mentioned in scenario 'e'
-//             await downloadFiles();
-//             await deletePortfolio();
-//             await deleteCollection();
-//             // Upload collection, adjust settings, start reactor
-//             // (You need to implement these steps)
-//         }
-//     }
-// }
 
 async function strategyThree(page){
+    const PFthreshold = 2;
     const NPthreshold = 50000;
+    const SRthreshold = 0.1;
     const maxDrawdownThreshold = 10;
     const initialSRthreshold = 0.07;
     const maxSRthreshold = 0.5;
@@ -462,56 +357,55 @@ async function strategyThree(page){
     let currentSRthreshold = initialSRthreshold;
     let isCriteriaMet = false;
 
-    let analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold);
-    await activatePerformanceFilter();
+    let analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
+    
 
-    if(analysisResults.isMaxDrawdownLess && analysisResults.isNetProfitGreater && analysisResults.sharpRatio>=0.1){
+    if(analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater){
       console.log("All three conditions met");
-      analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold);
+      analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
       console.log(`Analysis results: ${analysisResults}`);
       await downloadFiles();
+      await clearCollection();
+      await clearPortfolio();
     }else{
-      while(!(analysisResults.isMaxDrawdownLess && analysisResults.isSharpRatioGreater)){
+      console.log("Inside Else");
+      await activatePerformanceFilter();
+      while((analysisResults.maxDrawdown>10.0 && analysisResults.sharpRatio<0.1)){
         console.log("Increasing sharpe ratio in while loop");
         // Change sharp ratio
         currentSRthreshold = currentSRthreshold + SRincrement;
         await updateSharpRatio(currentSRthreshold);
-        analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold);
+        analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
         console.log(analysisResults);
 
       }
-      analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold);
-      if(analysisResults.netProfit<50000){
-        console.log("Passed while loop");
-        await downloadFiles();
+      analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
+      
+      if(!analysisResults.isProfitFactorGreater){
+        console.log("Inside if after while loop");
+        let files = await downloadFiles();
         await clearPortfolio();
         await clearCollection();
-        await uploadFiles(collectionDownloadPath);
+        console.log(files.collectionDownloadPath)
+        await uploadCollection(files.collectionDownloadPath);
 
         // Change sharp ratio in acceptance criteria
-        await changeSharpRatioAcceptanceCriteria();
-        await page.waitForSelector('#eas-navbar-tools-link');
-        await page.click('#eas-navbar-tools-link');
-        await page.waitForSelector('#eas-navbar-acceptance-criteria-link');
-        await page.click('#eas-navbar-acceptance-criteria-link');
-
-        await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').click();
-        await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').press('Control+Shift+ArrowLeft');
-        await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill('1.01');
-        
+        await changeSharpRatioAcceptanceCriteria(currentSRthreshold-0.02);
+        await RunOrStopReactor();
       }else{
+        console.log("Inside else after while loop");
         await downloadFiles();
+        await uncheckPerformanceFilter();
+        await downloadFiles();
+
       }
     }
 }
-
-
   await initialSetup();
-  await uploadCollection(collectionDownloadPath);
+  await uploadCollection(initCollectionDownloadPath);
   await addAllCollections();
-  await getCollectionNumber();
-  console.log(await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold));
+  console.log(await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold));
+  console.log(await getCollectionNumber());
+  console.log(await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold));
   await strategyThree(page);
-  
-    
 })();

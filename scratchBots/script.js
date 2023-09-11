@@ -277,8 +277,6 @@ const { chromium } = require("playwright");
     console.log("Script1 download finished");
   }
 
-
-
   async function uploadCollection() {
     await page.waitForSelector("#eas-navbar-collection-link");
     await page.click("#eas-navbar-collection-link");
