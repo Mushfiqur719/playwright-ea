@@ -215,53 +215,47 @@ const { chromium } = require("playwright");
     await page.click("#button-start-stop");
   }
 
-  async function downloadFiles() {
-    //Export the portfolio and download the unfiltered collection
-    await page.waitForTimeout(3000);
-    await page.waitForSelector("#portfolio-toolbar-export");
-    await page.click("#portfolio-toolbar-export");
-    await page.waitForSelector("#export-portfolio-expert-mt5");
-
-    // Wait for download to start
-    const [download] = await Promise.all([
-      page.waitForEvent("download"),
-      page.click("#export-portfolio-expert-mt5"),
-    ]);
-
-    await fs.mkdir(downloadFolderPath, { recursive: true });
-    const suggestedFileName = download.suggestedFilename();
-    const portfolioDownloadPath = path.join(
-      downloadFolderPath,
-      suggestedFileName
-    );
-    await download.saveAs(portfolioDownloadPath);
-    console.log("Portfolio saved to:", portfolioDownloadPath);
-
-    await page.waitForSelector("#eas-navbar-collection-link");
-    await page.click("#eas-navbar-collection-link");
-    await page.waitForSelector("#download-collection");
-    await page.click("#download-collection");
-
-    const [collection_download] = await Promise.all([
-      page.waitForEvent("download"),
-      page.getByRole("link", { name: "Collection", exact: true }).click(),
-    ]);
-
-    await fs.mkdir(downloadFolderPath, { recursive: true });
-    const collectionFileName = collection_download.suggestedFilename();
-    const collectionDownloadPath = path.join(
-      downloadFolderPath,
-      collectionFileName
-    );
-    await collection_download.saveAs(collectionDownloadPath);
-    console.log("Collected strategies saved to:", collectionDownloadPath);
-
-    console.log("Script1 download finished");
-    return {
-      portfolioDownloadPath: portfolioDownloadPath,
-      collectionDownloadPath: collectionDownloadPath,
-    };
-  }
+  async function downloadFiles(){
+      //Export the portfolio and download the unfiltered collection
+      await page.waitForTimeout(3000);
+      await page.waitForSelector('#portfolio-toolbar-export');
+      await page.click('#portfolio-toolbar-export');
+      await page.waitForSelector('#export-portfolio-expert-mt5');
+    
+      // Wait for download to start
+      const [download] = await Promise.all([
+        page.waitForEvent('download'),
+        page.click('#export-portfolio-expert-mt5')
+      ]);
+    
+      await fs.mkdir(downloadFolderPath, { recursive: true });
+      const suggestedFileName = download.suggestedFilename();
+      const portfolioDownloadPath = path.join(downloadFolderPath, suggestedFileName);
+      await download.saveAs(portfolioDownloadPath);
+      console.log('Portfolio saved to:', portfolioDownloadPath);
+    
+      await page.waitForSelector('#eas-navbar-collection-link');
+      await page.click('#eas-navbar-collection-link');
+      await page.waitForSelector('#download-collection');
+      await page.click('#download-collection');
+    
+      const [collection_download] = await Promise.all([
+        page.waitForEvent('download'),
+        page.getByRole('link', { name: 'Collection', exact: true }).click()
+      ]);
+    
+      await fs.mkdir(downloadFolderPath, { recursive: true });
+      const collectionFileName = collection_download.suggestedFilename();
+      const collectionDownloadPath = path.join(downloadFolderPath, collectionFileName);
+      await collection_download.saveAs(collectionDownloadPath);
+      console.log('Collected strategies saved to:', collectionDownloadPath);
+    
+      console.log("Script1 download finished");
+      return{
+        portfolioDownloadPath: portfolioDownloadPath,
+        collectionDownloadPath: collectionDownloadPath
+      };
+    }
 
   async function uploadCollection(downloadPath) {
     await page.waitForSelector("#eas-navbar-collection-link");
