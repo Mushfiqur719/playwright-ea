@@ -344,68 +344,138 @@ async function uncheckPerformanceFilter(){
   await page.getByLabel('Use performance filters.').uncheck();
 }
 
+async function strategyOne() {
+  //<-------------------Change the stop loss and take profit------------------->
+  await page
+    .locator("div")
+    .filter({ hasText: /^2\. Strategy properties$/ })
+    .click();
+  await page.getByLabel("Stop Loss", { exact: true }).selectOption("1");
+  await page.getByLabel("Take Profit", { exact: true }).selectOption("1");
+  await RunOrStopReactor();
+}
 
 async function strategyThree(page){
-    const PFthreshold = 2;
-    const NPthreshold = 50000;
-    const SRthreshold = 0.1;
-    const maxDrawdownThreshold = 10;
-    const initialSRthreshold = 0.07;
-    const maxSRthreshold = 0.5;
-    const SRincrement = 0.02;
+  const PFthreshold = 2;
+  const NPthreshold = 50000;
+  const SRthreshold = 0.1;
+  const maxDrawdownThreshold = 10;
+  const initialSRthreshold = 0.07;
+  const maxSRthreshold = 0.5;
+  const SRincrement = 0.02;
 
-    let currentSRthreshold = initialSRthreshold;
-    let isCriteriaMet = false;
+  let currentSRthreshold = initialSRthreshold;
+  let isCriteriaMet = false;
 
-    let analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
-    
+  let analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
+  
 
-    if(analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater){
-      console.log("All three conditions met");
+  if(analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater){
+    console.log("All three conditions met");
+    analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
+    console.log(`Analysis results: ${analysisResults}`);
+    await downloadFiles();
+    await clearCollection();
+    await clearPortfolio();
+  }else{
+    console.log("Inside Else");
+    await activatePerformanceFilter();
+    while((analysisResults.maxDrawdown>10.0 && analysisResults.sharpRatio<0.1)){
+      console.log("Increasing sharpe ratio in while loop");
+      // Change sharp ratio
+      currentSRthreshold = currentSRthreshold + SRincrement;
+      await updateSharpRatio(currentSRthreshold);
       analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
-      console.log(`Analysis results: ${analysisResults}`);
-      await downloadFiles();
-      await clearCollection();
-      await clearPortfolio();
-    }else{
-      console.log("Inside Else");
-      await activatePerformanceFilter();
-      while((analysisResults.maxDrawdown>10.0 && analysisResults.sharpRatio<0.1)){
-        console.log("Increasing sharpe ratio in while loop");
-        // Change sharp ratio
-        currentSRthreshold = currentSRthreshold + SRincrement;
-        await updateSharpRatio(currentSRthreshold);
-        analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
-        console.log(analysisResults);
+      console.log(analysisResults);
 
-      }
-      analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
-      
-      if(!analysisResults.isProfitFactorGreater){
-        console.log("Inside if after while loop");
-        let files = await downloadFiles();
-        await clearPortfolio();
-        await clearCollection();
-        console.log(files.collectionDownloadPath)
-        await uploadCollection(files.collectionDownloadPath);
-
-        // Change sharp ratio in acceptance criteria
-        await changeSharpRatioAcceptanceCriteria(currentSRthreshold-0.02);
-        await RunOrStopReactor();
-      }else{
-        console.log("Inside else after while loop");
-        await downloadFiles();
-        await uncheckPerformanceFilter();
-        await downloadFiles();
-
-      }
     }
+    analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
+    
+    if(!analysisResults.isProfitFactorGreater){
+      console.log("Inside if after while loop");
+      let files = await downloadFiles();
+      await clearPortfolio();
+      await clearCollection();
+      console.log(files.collectionDownloadPath)
+      await uploadCollection(files.collectionDownloadPath);
+
+      // Change sharp ratio in acceptance criteria
+      await changeSharpRatioAcceptanceCriteria(currentSRthreshold-0.02);
+      await RunOrStopReactor();
+    }else{
+      console.log("Inside else after while loop");
+      await downloadFiles();
+      await uncheckPerformanceFilter();
+      await downloadFiles();
+
+    }
+  }
 }
+
+async function strategyFour(page) {
+  const PFthreshold = 2;
+  const NPthreshold = 50000;
+  const SRthreshold = 0.1;
+  const maxDrawdownThreshold = 10;
+  const initialSRthreshold = 0.15;
+  const maxSRthreshold = 0.5;
+  const SRincrement = 0.05;
+
+  let currentSRthreshold = initialSRthreshold;
+  let isCriteriaMet = false;
+
+  let analysisResults = await analyzeBacktestResults3(
+    page,
+    NPthreshold,
+    maxDrawdownThreshold,
+    SRthreshold,
+    PFthreshold
+  );
+
+  if (analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater) {
+    await activatePerformanceFilter();
+    let strategies = await getStrategies();
+    while(strategies<90){
+      currentSRthreshold = currentSRthreshold+SRincrement;
+      await updateSharpRatio(currentSRthreshold);
+      strategies = await getStrategies();
+    }
+
+    await downloadFiles();
+    await clearCollection();
+    await clearPortfolio();
+    await uploadCollection();
+    await changeSharpRatioAcceptanceCriteria(currentSRthreshold);
+    await RunOrStopReactor();
+  }
+}
+
+
   await initialSetup();
   await uploadCollection(initCollectionDownloadPath);
   await addAllCollections();
+
+  // Get the value from collection notification
+  const producedStrategies = await page.$eval(
+    "#eas-collection-notification",
+    (element) => element.textContent.trim()
+  );
+
+  if (producedStrategies <= 30) {
+    console.log("No. of strategies produced: ", producedStrategies);
+    await strategyOne(page);
+  } else if (producedStrategies <= 150) {
+    console.log("No. of strategies produced: ", producedStrategies);
+  } else if (producedStrategies <= 240) {
+    console.log("No. of strategies produced: ", producedStrategies);
+    await strategyThree(page);
+  }else if(producedStrategies > 240){
+    console.log("No. of strategies produced: ", producedStrategies);
+    await strategyFour(page);
+  }
+
+
   console.log(await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold));
   console.log(await getCollectionNumber());
   console.log(await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold));
-  await strategyThree(page);
 })();
