@@ -457,7 +457,7 @@ const { chromium } = require("playwright");
     await page.getByLabel("Use performance filters.").uncheck();
   }
 
-  async function strategyOne() {
+  async function strategyOne(page) {
     //<-------------------Change the stop loss and take profit------------------->
     await page
       .locator("div")
@@ -609,15 +609,19 @@ const { chromium } = require("playwright");
   let strategies = await getStrategies();
   strategies = parseInt(strategies);
   if (strategies < 30 ){
-    await strategyOne();
+    console.log("Strategy one activated");
+    await strategyOne(page);
   }else if(strategies >= 140){
-    await strategyTwo();
+    console.log("Strategy two activated");
+    await strategyTwo(page);
   }else if(strategies>=240){
-    //StrategyThree
-    await strategyThree();
+    
+    console.log("Strategy three activated");
+    await strategyThree(page);
   }else{
     //StrategyFour
-    await strategyFour();
+    console.log("Strategy four activated");
+    await strategyFour(page);
   }
   console.log(
     await analyzeBacktestResults3(
