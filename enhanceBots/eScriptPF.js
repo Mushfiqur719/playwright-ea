@@ -10,14 +10,6 @@ const { chromium } = require('playwright');
     // channel: "msedge",
   });
   
-  //<-------------------To Open in non-incognito mode(Under Development)----------------------->
-  // const browser = await chromium.launchPersistentContext('C:/Users/mushf/AppData/Local/Microsoft/Edge/User Data/Default', {
-  //   headless: false,  // Set to true for headless mode, false for visible window
-  //   // slowMo: 50,       // Slow down actions by 50ms (for better visualization)
-  //   channel: "msedge"
-  // });
-  
-
   const PFthreshold = 2;
   const NPthreshold = 30000;
   const maxDrawdownThreshold = 10;
@@ -295,7 +287,6 @@ async function analyzeBacktestResults3(page, NPthreshold, maxDrawdownThreshold, 
 async function updateSharpRatio(currentSRthreshold){
         await page.waitForSelector('#eas-navbar-collection-link');
         await page.click('#eas-navbar-collection-link');
-
         await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill(currentSRthreshold.toString());
         await page.locator('#eas-main-container').click();
 }
@@ -357,7 +348,7 @@ async function strategyOne() {
 
 async function strategyThree(page){
   const PFthreshold = 2;
-  const NPthreshold = 50000;
+  const NPthreshold = 30000;
   const SRthreshold = 0.1;
   const maxDrawdownThreshold = 10;
   const initialSRthreshold = 0.07;
@@ -380,8 +371,8 @@ async function strategyThree(page){
   }else{
     console.log("Inside Else");
     await activatePerformanceFilter();
-    while((analysisResults.maxDrawdown>10.0 && analysisResults.sharpRatio<0.1)){
-      console.log("Increasing sharpe ratio in while loop");
+    while((analysisResults.maxDrawdown>=10.0 && analysisResults.sharpRatio<0.1)){
+      console.log("Increasing sharpe ratio.....");
       // Change sharp ratio
       currentSRthreshold = currentSRthreshold + SRincrement;
       await updateSharpRatio(currentSRthreshold);
@@ -392,7 +383,12 @@ async function strategyThree(page){
     analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
     
     if(!analysisResults.isProfitFactorGreater){
-      console.log("Inside if after while loop");
+      console.log("Profit factor is greater downloading files.");
+      await downloadFiles();
+      await uncheckPerformanceFilter();
+      await downloadFiles();
+    }else{
+      console.log("Profit factor is smaller re-running reactor.");
       let files = await downloadFiles();
       await clearPortfolio();
       await clearCollection();
@@ -400,13 +396,8 @@ async function strategyThree(page){
       await uploadCollection(files.collectionDownloadPath);
 
       // Change sharp ratio in acceptance criteria
-      await changeSharpRatioAcceptanceCriteria(currentSRthreshold-0.02);
+      await changeSharpRatioAcceptanceCriteria(currentSRthreshold-0.01);
       await RunOrStopReactor();
-    }else{
-      console.log("Inside else after while loop");
-      await downloadFiles();
-      await uncheckPerformanceFilter();
-      await downloadFiles();
 
     }
   }
