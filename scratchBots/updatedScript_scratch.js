@@ -50,12 +50,6 @@ const vpHeight = 250;
     slowMo: speed,
   });
 
-  //<-------------------To Open in non-incognito mode----------------------->
-  // const browser = await chromium.launchPersistentContext('C:/Users/mushf/AppData/Local/Microsoft/Edge/User Data/Default', {
-  //   headless: false,  // Set to true for headless mode, false for visible window
-  //   // slowMo: 50,       // Slow down actions by 50ms (for better visualization)
-  //   channel: "msedge"
-  // });
 
   const context = await browser.newContext({
     storageState: "auth.json",

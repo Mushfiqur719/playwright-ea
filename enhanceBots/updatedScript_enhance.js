@@ -2,6 +2,52 @@ const fs = require('fs').promises;
 const path = require('path');
 const { chromium } = require('playwright');
 
+////<_____________________Change the required setups here_____________________>
+const channelName = "msedge";
+const speed = 600;
+const timer = 12; //hours
+
+//<---------------Reactor page---------------->
+//<---------------Historical Data---------------->
+
+//==========>  
+const dataSource = "FXView-Demo";
+//==========>
+const symbol = "USDCHF";
+//==========>
+const period = "H1";
+
+//<---------------Strategy Properties---------------->
+const entrylots = "0.01";
+const oppEntrySignalOption = "2";
+const stopLossOption = "0";
+const typeOption = "3";
+const minPips = "1";
+const maxPips = "1000";
+const takeProfitOptions = "0";
+const tpRangeMin = "2";
+const tpRangeMax = "1000";
+  //<---------------Generator Settings---------------->
+const searchBestOption = "4";
+const maxEntryOption = "8";
+const maxExitOption = "4";
+const runTime = "720";
+  //<----------------Data Horizon------------------->
+const maxDataBars = "200000";
+const startDate = "2018-09-14";
+  //
+const collectionCapacity = "300";
+const accMinNetProfit = "250";
+const minCountOfTrade = "50";
+const minSharpeRatio = "0.01";
+const montCarloMinNetProfit = "50";
+const montCarloMinCountOfTrade = "50";
+const minProfitFactor = "1.01";
+  //ViewPort size setup
+const vpWidth = 550;
+const vpHeight = 250; 
+//<-----------------Change the required setups here----------------->
+
 (async () => {
   const browser = await chromium.launch({
     headless: false,
@@ -10,14 +56,6 @@ const { chromium } = require('playwright');
     // channel: "msedge",
   });
   
-  //<-------------------To Open in non-incognito mode(Under Development)----------------------->
-  // const browser = await chromium.launchPersistentContext('C:/Users/mushf/AppData/Local/Microsoft/Edge/User Data/Default', {
-  //   headless: false,  // Set to true for headless mode, false for visible window
-  //   // slowMo: 50,       // Slow down actions by 50ms (for better visualization)
-  //   channel: "msedge"
-  // });
-  
-
   const PFthreshold = 2;
   const NPthreshold = 30000;
   const maxDrawdownThreshold = 10;
@@ -60,86 +98,148 @@ if (matches && matches.length >= 2) {
 
   }
 
-  async function initialSetup(){
-    await page.getByRole('link', { name: 'Open the Generator, the Reactor, or the Validator' }).click();
-    await page.getByRole('link', { name: 'Reactor', exact: true }).click();
-    
-    //=====> Change the Data Source here
-    await page.getByLabel('Data source').selectOption('FXView-Demo');
-    //=====> Change the Symbol here
-    await page.getByLabel('Symbol').selectOption('GBPCAD');
-    //=====> Change the  Period here
-    await page.getByLabel('Period').selectOption('H1');
+  async function initialSetup() {
+    await page
+      .getByRole("link", {
+        name: "Open the Generator, the Reactor, or the Validator",
+      })
+      .click();
+    await page.getByRole("link", { name: "Reactor", exact: true }).click();
 
+    // Change the Data Source, Symbol and Period here
+    await page.getByLabel("Data source").selectOption(`${dataSource}`);
+    await page.getByLabel("Symbol").selectOption(`${symbol}`);
+    await page.getByLabel("Period").selectOption(`${period}`);
     // Strategy properties
-    await page.locator('div').filter({ hasText: /^2\. Strategy properties$/ }).click();
-    await page.getByLabel('Entry lots').click();
-    await page.getByLabel('Entry lots').press('ArrowLeft');
-    await page.getByLabel('Entry lots').fill('0.01');
-    await page.getByLabel('Opposite entry signal').selectOption('2');
-    await page.getByLabel('Stop Loss', { exact: true }).selectOption('0');
-    await page.getByLabel('Type').selectOption('3');
-    await page.getByRole('spinbutton', { name: 'Min (pips)' }).click();
-    await page.getByRole('spinbutton', { name: 'Min (pips)' }).fill('1');
-    await page.getByRole('spinbutton', { name: 'Max (pips)' }).click();
-    await page.getByRole('spinbutton', { name: 'Max (pips)' }).fill('1000');
-    await page.getByLabel('Take Profit', { exact: true }).selectOption('0');
-    await page.locator('#tp-range-min').click();
-    await page.locator('#tp-range-min').fill('2');
-    await page.locator('#tp-range-max').click();
-    await page.locator('#tp-range-max').fill('1000');
+    await page
+      .locator("div")
+      .filter({ hasText: /^2\. Strategy properties$/ })
+      .click();
+    await page.getByLabel("Entry lots").click();
+    await page.getByLabel("Entry lots").press("ArrowLeft");
+    await page.getByLabel("Entry lots").fill(`${entrylots}`);//<----------------|entrylots
+    await page.getByLabel("Opposite entry signal").selectOption(`${oppEntrySignalOption}`);//<----------------|
+    await page.getByLabel("Stop Loss", { exact: true }).selectOption(`${stopLossOption}`);//<----------------|
+    await page.getByLabel("Type").selectOption(`${typeOption}`);//<----------------|
+    await page.getByRole("spinbutton", { name: "Min (pips)" }).click();
+    await page.getByRole("spinbutton", { name: "Min (pips)" }).fill(`${minPips}`);//<----------------|
+    await page.getByRole("spinbutton", { name: "Max (pips)" }).click();
+    await page.getByRole("spinbutton", { name: "Max (pips)" }).fill(`${maxPips}`);//<----------------|
+    await page.getByLabel("Take Profit", { exact: true }).selectOption(`${takeProfitOptions}`);//<----------------|
+    await page.locator("#tp-range-min").click();
+    await page.locator("#tp-range-min").fill(`${tpRangeMin}`);//<----------------|
+    await page.locator("#tp-range-max").click();
+    await page.locator("#tp-range-max").fill(`${tpRangeMax}`);//<----------------|
     // Generator Settings
-    await page.locator('div').filter({ hasText: /^3\. Generator settings$/ }).click();
-    await page.locator('#search-best').selectOption('4');
-    await page.getByLabel('Max entry indicators').selectOption('8');
-    await page.getByLabel('Max exit indicators').selectOption('4');
-    await page.getByLabel('Generate strategies with\nPreset Indicators').uncheck();
-    await page.getByLabel('Working minutes').click();
-    // Change the time here
-    await page.getByLabel('Working minutes').fill('720');
-    await page.getByRole('link', { name: 'Data', exact: true }).click();
-    await page.getByRole('link', { name: 'Data Horizon' }).click();
-    await page.getByLabel('Maximum data bars').click();
-    await page.getByLabel('Maximum data bars').press('Control+a');
-    await page.getByLabel('Maximum data bars').fill('200000');
-    await page.getByLabel('Start date', { exact: true }).fill('2018-08-27');
-    await page.getByLabel('Use start date limit').check();
+    await page
+      .locator("div")
+      .filter({ hasText: /^3\. Generator settings$/ })
+      .click();
+    await page.locator("#search-best").selectOption(`${searchBestOption}`);
+    await page.getByLabel("Max entry indicators").selectOption(`${maxEntryOption}`);//<----------------|
+    await page.getByLabel("Max exit indicators").selectOption(`${maxExitOption}`);//<----------------|
+    await page
+      .getByLabel("Generate strategies with\nPreset Indicators")
+      .uncheck();
+    await page.getByLabel("Working minutes").click();
+    await page.getByLabel("Working minutes").fill(`${runTime}`);//<----------------|
+    await page.getByRole("link", { name: "Data", exact: true }).click();
+    await page.getByRole("link", { name: "Data Horizon" }).click();
+    await page.getByLabel("Maximum data bars").click();
+    await page.getByLabel("Maximum data bars").press("Control+a");
+    await page.getByLabel("Maximum data bars").fill(`${maxDataBars}`);//<----------------|
+    await page.getByLabel("Start date", { exact: true }).fill(`${startDate}`);//<----------------|
+    await page.getByLabel("Use start date limit").check();
     // Tools
-    await page.getByRole('link', { name: 'Tools' }).click();
-    await page.getByLabel('Leverage').selectOption('1');
-    await page.getByLabel('Collection capacity').selectOption('300');
-    //Acceptance criteria
-    await page.getByRole('link', { name: 'Acceptance Criteria' }).click();
-    await page.locator('#validation-metrics-base div').filter({ hasText: /^Minimum net profit$/ }).getByRole('spinbutton').click();
-    await page.locator('#validation-metrics-base div').filter({ hasText: /^Minimum net profit$/ }).getByRole('spinbutton').fill('300');
-    await page.locator('div').filter({ hasText: /^Minimum count of trades$/ }).getByRole('spinbutton').click();
-    await page.locator('div').filter({ hasText: /^Minimum count of trades$/ }).getByRole('spinbutton').fill('50');
-    await page.locator('#validation-metrics-base').getByRole('button', { name: '+ Add acceptance criteria' }).click();
-    await page.getByRole('link', { name: 'Minimum Sharpe ratio' }).click();
-    await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').click();
-    await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill('.05');
-    
-    await page.getByRole('link', { name: 'Strategy ID -' }).click();
-    await page.getByRole('link', { name: 'Monte Carlo' }).click();
-    await page.getByLabel('Randomize history data').uncheck();
-    await page.getByLabel('Randomize spread').uncheck();
-    await page.getByLabel('Randomize slippage').uncheck();
-    await page.getByLabel('Randomly skip position entry').uncheck();
-    await page.getByLabel('Randomly skip position exit').uncheck();
-    await page.getByLabel('Randomize indicator parameters').check();
-    await page.getByLabel('Randomize backtest starting bar').check();
-    await page.getByRole('link', { name: 'Validation' }).click();
-    await page.locator('div').filter({ hasText: /^Minimum net profit$/ }).getByRole('spinbutton').click();
-    await page.locator('div').filter({ hasText: /^Minimum net profit$/ }).getByRole('spinbutton').fill('50');
-    await page.locator('div').filter({ hasText: /^Minimum count of trades$/ }).getByRole('spinbutton').click();
-    await page.locator('div').filter({ hasText: /^Minimum count of trades$/ }).getByRole('spinbutton').fill('50');
-    await page.getByRole('button', { name: '+ Add validation criteria' }).click();
-    await page.getByRole('link', { name: 'Minimum profit factor' }).click();
-    await page.locator('div').filter({ hasText: /^Minimum profit factor$/ }).getByRole('spinbutton').click();
-    await page.locator('div').filter({ hasText: /^Minimum profit factor$/ }).getByRole('spinbutton').fill('1.01');
-    await page.getByRole('link', { name: 'Reactor', exact: true }).click();
+    await page.getByRole("link", { name: "Tools" }).click();
+    // await page.getByLabel("Leverage").selectOption("6");
+    await page.getByLabel("Collection capacity").selectOption(`${collectionCapacity}`);//<----------------|
+    await page.getByRole("link", { name: "Acceptance Criteria" }).click();
+    await page
+      .locator("#validation-metrics-base div")
+      .filter({ hasText: /^Minimum net profit$/ })
+      .getByRole("spinbutton")
+      .click();
+    await page
+      .locator("#validation-metrics-base div")
+      .filter({ hasText: /^Minimum net profit$/ })
+      .getByRole("spinbutton")
+      .fill(`${accMinNetProfit}`);//<----------------|
+    await page
+      .locator("div")
+      .filter({ hasText: /^Minimum count of trades$/ })
+      .getByRole("spinbutton")
+      .click();
+    await page
+      .locator("div")
+      .filter({ hasText: /^Minimum count of trades$/ })
+      .getByRole("spinbutton")
+      .fill(`${minCountOfTrade}`);//<----------------|
+    await page
+      .locator("#validation-metrics-base")
+      .getByRole("button", { name: "+ Add acceptance criteria" })
+      .click();
+    await page.getByRole("link", { name: "Minimum Sharpe ratio" }).click();
+    await page
+      .locator("div")
+      .filter({ hasText: /^Minimum Sharpe ratio$/ })
+      .getByRole("spinbutton")
+      .click();
+    await page
+      .locator("div")
+      .filter({ hasText: /^Minimum Sharpe ratio$/ })
+      .getByRole("spinbutton")
+      .fill(`${minSharpeRatio}`);//<----------------|
+
+    await page.getByRole("link", { name: "Strategy ID -" }).click();
+    await page.getByRole("link", { name: "Monte Carlo" }).click();
+    await page.getByLabel("Randomize history data").uncheck();
+    await page.getByLabel("Randomize spread").uncheck();
+    await page.getByLabel("Randomize slippage").uncheck();
+    await page.getByLabel("Randomly skip position entry").uncheck();
+    await page.getByLabel("Randomly skip position exit").uncheck();
+    await page.getByLabel("Randomize indicator parameters").check();
+    await page.getByLabel("Randomize backtest starting bar").check();
+    await page.getByRole("link", { name: "Validation" }).click();
+    await page
+      .locator("div")
+      .filter({ hasText: /^Minimum net profit$/ })
+      .getByRole("spinbutton")
+      .click();
+    await page
+      .locator("div")
+      .filter({ hasText: /^Minimum net profit$/ })
+      .getByRole("spinbutton")
+      .fill(`${montCarloMinNetProfit}`);//<----------------|
+    await page
+      .locator("div")
+      .filter({ hasText: /^Minimum count of trades$/ })
+      .getByRole("spinbutton")
+      .click();
+    await page
+      .locator("div")
+      .filter({ hasText: /^Minimum count of trades$/ })
+      .getByRole("spinbutton")
+      .fill(`${montCarloMinCountOfTrade}`);//<----------------|
+    await page
+      .getByRole("button", { name: "+ Add validation criteria" })
+      .click();
+    await page.getByRole("link", { name: "Minimum profit factor" }).click();
+    await page
+      .locator("div")
+      .filter({ hasText: /^Minimum profit factor$/ })
+      .getByRole("spinbutton")
+      .click();
+    await page
+      .locator("div")
+      .filter({ hasText: /^Minimum profit factor$/ })
+      .getByRole("spinbutton")
+      .fill(`${minProfitFactor}`);//<----------------|
+    await page.getByRole("link", { name: "Reactor", exact: true }).click();
     await page.waitForTimeout(5000);
-    await page.getByRole('button', { name: 'Confirm' }).click();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    await RunOrStopReactor();
+    await page.setViewportSize({ width: vpWidth, height: vpHeight });//<----------------|
   }
 
   async function RunOrStopReactor(){
@@ -295,7 +395,6 @@ async function analyzeBacktestResults3(page, NPthreshold, maxDrawdownThreshold, 
 async function updateSharpRatio(currentSRthreshold){
         await page.waitForSelector('#eas-navbar-collection-link');
         await page.click('#eas-navbar-collection-link');
-
         await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill(currentSRthreshold.toString());
         await page.locator('#eas-main-container').click();
 }
@@ -357,7 +456,7 @@ async function strategyOne() {
 
 async function strategyThree(page){
   const PFthreshold = 2;
-  const NPthreshold = 50000;
+  const NPthreshold = 30000;
   const SRthreshold = 0.1;
   const maxDrawdownThreshold = 10;
   const initialSRthreshold = 0.07;
@@ -380,8 +479,8 @@ async function strategyThree(page){
   }else{
     console.log("Inside Else");
     await activatePerformanceFilter();
-    while((analysisResults.maxDrawdown>10.0 && analysisResults.sharpRatio<0.1)){
-      console.log("Increasing sharpe ratio in while loop");
+    while((analysisResults.maxDrawdown>=10.0 && analysisResults.sharpRatio<0.1)){
+      console.log("Increasing sharpe ratio.....");
       // Change sharp ratio
       currentSRthreshold = currentSRthreshold + SRincrement;
       await updateSharpRatio(currentSRthreshold);
@@ -392,7 +491,12 @@ async function strategyThree(page){
     analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
     
     if(!analysisResults.isProfitFactorGreater){
-      console.log("Inside if after while loop");
+      console.log("Profit factor is greater downloading files.");
+      await downloadFiles();
+      await uncheckPerformanceFilter();
+      await downloadFiles();
+    }else{
+      console.log("Profit factor is smaller re-running reactor.");
       let files = await downloadFiles();
       await clearPortfolio();
       await clearCollection();
@@ -400,13 +504,8 @@ async function strategyThree(page){
       await uploadCollection(files.collectionDownloadPath);
 
       // Change sharp ratio in acceptance criteria
-      await changeSharpRatioAcceptanceCriteria(currentSRthreshold-0.02);
+      await changeSharpRatioAcceptanceCriteria(currentSRthreshold-0.01);
       await RunOrStopReactor();
-    }else{
-      console.log("Inside else after while loop");
-      await downloadFiles();
-      await uncheckPerformanceFilter();
-      await downloadFiles();
 
     }
   }
