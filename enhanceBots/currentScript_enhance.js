@@ -6,19 +6,12 @@ const { chromium } = require('playwright');
   const browser = await chromium.launch({
     headless: false,
     //========> Change the number below to slowdown or go faster(lesser to go faster)
-    slowMo:600,
+    slowMo:100,
     // channel: "msedge",
   });
   
-  //<-------------------To Open in non-incognito mode(Under Development)----------------------->
-  // const browser = await chromium.launchPersistentContext('C:/Users/mushf/AppData/Local/Microsoft/Edge/User Data/Default', {
-  //   headless: false,  // Set to true for headless mode, false for visible window
-  //   // slowMo: 50,       // Slow down actions by 50ms (for better visualization)
-  //   channel: "msedge"
-  // });
-  
 
-  const PFthreshold = 2;
+  const PFthreshold = 1.25;
   const NPthreshold = 30000;
   const maxDrawdownThreshold = 10;
   const SRthreshold = 0.1;
@@ -32,11 +25,11 @@ const { chromium } = require('playwright');
   //<--------------------------Start Here-------------------------------->
   
   //======> Change this line for a new collection
-  const collection = 'Strategy Collection 54 GBPCAD H1.json';
+  const collection = 'Strategy Collection FXView-Live EURMXN H1 162.json';
   //======> Copy the path of the collection and change backslashe with forward slash
-  const Path = 'C:/Users/FCTwin1001/Downloads/automation_downloads/Collections';
+  const Path = 'C:/megaEABot/Collections';
   //======> Set the path to download files here
-  const downloadFolderPath = 'C:/Users/FCTwin1001/Downloads/automation_downloads/';
+  const downloadFolderPath = 'C:/megaEABot';
 
   let initCollectionDownloadPath =`${Path}/${collection}`;
 
@@ -44,30 +37,30 @@ const { chromium } = require('playwright');
   await page.getByLabel('Theme').selectOption('dark');
   await page.waitForTimeout(3000);
 
-  async function getFileNames(){
-    const inputString = "Strategy Collection 54 GBPCAD H1.json"; // Example input string
-const regex = /([A-Z]+\d+)/g;
-const matches = inputString.match(regex);
+async function getFileNames(){
+  const inputString = collection; // Example input string
+  const regex = /([A-Z]+\d+)/g;
+  const matches = inputString.match(regex);
 
-if (matches && matches.length >= 2) {
-  const name1 = matches[0];
-  const name2 = matches[1];
-  console.log(name1); // Output: GBPCAD
-  console.log(name2); // Output: H1
-} else {
-  console.log("No matches found.");
-}
-
+  if (matches && matches.length >= 2) {
+    const name1 = matches[0];
+    const name2 = matches[1];
+    console.log(name1); // Output: EURCHF
+    console.log(name2); // Output: H1
+  } else {
+    console.log("No matches found.");
   }
 
-  async function initialSetup(){
+}
+
+async function initialSetup(){
     await page.getByRole('link', { name: 'Open the Generator, the Reactor, or the Validator' }).click();
     await page.getByRole('link', { name: 'Reactor', exact: true }).click();
     
     //=====> Change the Data Source here
-    await page.getByLabel('Data source').selectOption('FXView-Demo');
+    await page.getByLabel('Data source').selectOption('FXView-Live');
     //=====> Change the Symbol here
-    await page.getByLabel('Symbol').selectOption('GBPCAD');
+    await page.getByLabel('Symbol').selectOption('EURCHF');
     //=====> Change the  Period here
     await page.getByLabel('Period').selectOption('H1');
 
@@ -102,16 +95,16 @@ if (matches && matches.length >= 2) {
     await page.getByLabel('Maximum data bars').click();
     await page.getByLabel('Maximum data bars').press('Control+a');
     await page.getByLabel('Maximum data bars').fill('200000');
-    await page.getByLabel('Start date', { exact: true }).fill('2018-08-27');
+    await page.getByLabel('Start date', { exact: true }).fill('2018-09-17');
     await page.getByLabel('Use start date limit').check();
     // Tools
     await page.getByRole('link', { name: 'Tools' }).click();
-    await page.getByLabel('Leverage').selectOption('1');
+   // await page.getByLabel('Leverage').selectOption('1');
     await page.getByLabel('Collection capacity').selectOption('300');
     //Acceptance criteria
     await page.getByRole('link', { name: 'Acceptance Criteria' }).click();
     await page.locator('#validation-metrics-base div').filter({ hasText: /^Minimum net profit$/ }).getByRole('spinbutton').click();
-    await page.locator('#validation-metrics-base div').filter({ hasText: /^Minimum net profit$/ }).getByRole('spinbutton').fill('300');
+    await page.locator('#validation-metrics-base div').filter({ hasText: /^Minimum net profit$/ }).getByRole('spinbutton').fill('200');
     await page.locator('div').filter({ hasText: /^Minimum count of trades$/ }).getByRole('spinbutton').click();
     await page.locator('div').filter({ hasText: /^Minimum count of trades$/ }).getByRole('spinbutton').fill('50');
     await page.locator('#validation-metrics-base').getByRole('button', { name: '+ Add acceptance criteria' }).click();
@@ -155,6 +148,8 @@ if (matches && matches.length >= 2) {
   async function downloadFiles(){
       //Export the portfolio and download the unfiltered collection
       await page.waitForTimeout(3000);
+      await page.waitForSelector('#eas-navbar-portfolio-link');
+      await page.click('#eas-navbar-portfolio-link');
       await page.waitForSelector('#portfolio-toolbar-export');
       await page.click('#portfolio-toolbar-export');
       await page.waitForSelector('#export-portfolio-expert-mt5');
@@ -356,8 +351,8 @@ async function strategyOne() {
 }
 
 async function strategyThree(page){
-  const PFthreshold = 2;
-  const NPthreshold = 50000;
+  const PFthreshold = 1.25;
+  const NPthreshold = 30000;
   const SRthreshold = 0.1;
   const maxDrawdownThreshold = 10;
   const initialSRthreshold = 0.07;
@@ -400,7 +395,7 @@ async function strategyThree(page){
       await uploadCollection(files.collectionDownloadPath);
 
       // Change sharp ratio in acceptance criteria
-      await changeSharpRatioAcceptanceCriteria(currentSRthreshold-0.02);
+      await changeSharpRatioAcceptanceCriteria(currentSRthreshold-0.01);
       await RunOrStopReactor();
     }else{
       console.log("Inside else after while loop");
@@ -413,13 +408,13 @@ async function strategyThree(page){
 }
 
 async function strategyFour(page) {
-  const PFthreshold = 2;
-  const NPthreshold = 50000;
+  const PFthreshold = 1.25;
+  const NPthreshold = 30000;
   const SRthreshold = 0.1;
   const maxDrawdownThreshold = 10;
   const initialSRthreshold = 0.15;
   const maxSRthreshold = 0.5;
-  const SRincrement = 0.05;
+  const SRincrement = 0.02;
 
   let currentSRthreshold = initialSRthreshold;
   let isCriteriaMet = false;
@@ -461,15 +456,15 @@ async function strategyFour(page) {
     (element) => element.textContent.trim()
   );
 
-  if (producedStrategies <= 30) {
+  if (producedStrategies <= 40) {
     console.log("No. of strategies produced: ", producedStrategies);
     await strategyOne(page);
-  } else if (producedStrategies <= 150) {
+  } else if (producedStrategies <= 50) {
     console.log("No. of strategies produced: ", producedStrategies);
-  } else if (producedStrategies <= 240) {
+  } else if (producedStrategies <= 200) {
     console.log("No. of strategies produced: ", producedStrategies);
     await strategyThree(page);
-  }else if(producedStrategies > 240){
+  }else if(producedStrategies > 200){
     console.log("No. of strategies produced: ", producedStrategies);
     await strategyFour(page);
   }
