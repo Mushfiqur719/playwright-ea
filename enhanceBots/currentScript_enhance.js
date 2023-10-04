@@ -111,7 +111,15 @@ async function initialSetup(){
     await page.getByRole('link', { name: 'Minimum Sharpe ratio' }).click();
     await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').click();
     await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill('.05');
-    
+
+    await page.getByRole('link', { name: 'Available Indicators' }).click();
+    await page.locator('#toggle-entries').click();
+    await page.locator('#toggle-entries').click();
+    await page.locator('#toggle-exits').click();
+    await page.locator('#toggle-exits').click();
+    await page.getByRole('row', { name: 'Do not Exit' }).getByRole('checkbox').uncheck();
+    await page.getByRole('row', { name: 'Exit Time' }).getByRole('checkbox').uncheck();
+
     await page.getByRole('link', { name: 'Strategy ID -' }).click();
     await page.getByRole('link', { name: 'Monte Carlo' }).click();
     await page.getByLabel('Randomize history data').uncheck();
@@ -408,6 +416,7 @@ async function strategyThree(page){
 }
 
 async function strategyFour(page) {
+  console.log("Inside Strategy Four.")
   const PFthreshold = 1.25;
   const NPthreshold = 30000;
   const SRthreshold = 0.1;
@@ -427,7 +436,7 @@ async function strategyFour(page) {
     PFthreshold
   );
 
-  if (analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater) {
+  if (analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater && analysisResults.isNetProfitGreater) {
     await activatePerformanceFilter();
     let strategies = await getStrategies();
     while(strategies<90){

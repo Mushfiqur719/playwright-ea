@@ -13,7 +13,7 @@ const timer = 12; //hours
 //==========>  
 const dataSource = "FXView-Demo";
 //==========>
-const symbol = "USDCHF";
+const symbol = "EURNZD";
 //==========>
 const period = "H1";
 
@@ -51,9 +51,8 @@ const vpHeight = 250;
 (async () => {
   const browser = await chromium.launch({
     headless: false,
-    //========> Change the number below to slowdown or go faster(lesser to go faster)
-    slowMo:600,
-    // channel: "msedge",
+    slowMo:speed,
+    channel: channelName,
   });
   
   const PFthreshold = 2;
@@ -70,11 +69,11 @@ const vpHeight = 250;
   //<--------------------------Start Here-------------------------------->
   
   //======> Change this line for a new collection
-  const collection = 'Strategy Collection 54 GBPCAD H1.json';
+  const collection = 'Strategy Collection 300 EURNZD H1 FXView-Demo; .json';
   //======> Copy the path of the collection and change backslashe with forward slash
-  const Path = 'C:/Users/FCTwin1001/Downloads/automation_downloads/Collections';
+  const Path = 'C:/Users/FCTwin1001/Downloads/automation_downloads/Collections/FXView-Demo';
   //======> Set the path to download files here
-  const downloadFolderPath = 'C:/Users/FCTwin1001/Downloads/automation_downloads/';
+  const downloadFolderPath = 'C:/Users/FCTwin1001/Downloads/megaEABots/';
 
   let initCollectionDownloadPath =`${Path}/${collection}`;
 
@@ -190,6 +189,16 @@ if (matches && matches.length >= 2) {
       .filter({ hasText: /^Minimum Sharpe ratio$/ })
       .getByRole("spinbutton")
       .fill(`${minSharpeRatio}`);//<----------------|
+    
+
+      await page.getByRole('link', { name: 'Available Indicators' }).click();
+      await page.locator('#toggle-entries').click();
+      await page.locator('#toggle-entries').click();
+      await page.locator('#toggle-exits').click();
+      await page.locator('#toggle-exits').click();
+      await page.getByRole('row', { name: 'Do not Exit' }).getByRole('checkbox').uncheck();
+      await page.getByRole('row', { name: 'Exit Time' }).getByRole('checkbox').uncheck();
+    
 
     await page.getByRole("link", { name: "Strategy ID -" }).click();
     await page.getByRole("link", { name: "Monte Carlo" }).click();
@@ -238,7 +247,7 @@ if (matches && matches.length >= 2) {
     await page.getByRole("link", { name: "Reactor", exact: true }).click();
     await page.waitForTimeout(5000);
     await page.getByRole("button", { name: "Confirm" }).click();
-    await RunOrStopReactor();
+    // await RunOrStopReactor();
     await page.setViewportSize({ width: vpWidth, height: vpHeight });//<----------------|
   }
 
@@ -253,46 +262,48 @@ if (matches && matches.length >= 2) {
 
   //<----------------------Download Files Section---------------------->
   async function downloadFiles(){
-      //Export the portfolio and download the unfiltered collection
-      await page.waitForTimeout(3000);
-      await page.waitForSelector('#portfolio-toolbar-export');
-      await page.click('#portfolio-toolbar-export');
-      await page.waitForSelector('#export-portfolio-expert-mt5');
-    
-      // Wait for download to start
-      const [download] = await Promise.all([
-        page.waitForEvent('download'),
-        page.click('#export-portfolio-expert-mt5')
-      ]);
-    
-      await fs.mkdir(downloadFolderPath, { recursive: true });
-      const suggestedFileName = download.suggestedFilename();
-      const portfolioDownloadPath = path.join(downloadFolderPath, suggestedFileName);
-      await download.saveAs(portfolioDownloadPath);
-      console.log('Portfolio saved to:', portfolioDownloadPath);
-    
-      await page.waitForSelector('#eas-navbar-collection-link');
-      await page.click('#eas-navbar-collection-link');
-      await page.waitForSelector('#download-collection');
-      await page.click('#download-collection');
-    
-      const [collection_download] = await Promise.all([
-        page.waitForEvent('download'),
-        page.getByRole('link', { name: 'Collection', exact: true }).click()
-      ]);
-    
-      await fs.mkdir(downloadFolderPath, { recursive: true });
-      const collectionFileName = collection_download.suggestedFilename();
-      const collectionDownloadPath = path.join(downloadFolderPath, collectionFileName);
-      await collection_download.saveAs(collectionDownloadPath);
-      console.log('Collected strategies saved to:', collectionDownloadPath);
-    
-      console.log("Script1 download finished");
-      return{
-        portfolioDownloadPath: portfolioDownloadPath,
-        collectionDownloadPath: collectionDownloadPath
-      };
-    }
+    //Export the portfolio and download the unfiltered collection
+    await page.waitForTimeout(3000);
+    await page.waitForSelector('#portfolio-toolbar-export');
+    await page.click('#portfolio-toolbar-export');
+    await page.waitForSelector('#export-portfolio-expert-mt5');
+  
+    // Wait for download to start
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('#export-portfolio-expert-mt5')
+    ]);
+  
+    const pDownloadFolderPath = `${downloadFolderPath}/EA/` ;
+    await fs.mkdir(pDownloadFolderPath, { recursive: true });
+    const suggestedFileName = download.suggestedFilename();
+    const portfolioDownloadPath = path.join(pDownloadFolderPath, suggestedFileName);
+    await download.saveAs(portfolioDownloadPath);
+    console.log('Portfolio saved to:', portfolioDownloadPath);
+  
+    await page.waitForSelector('#eas-navbar-collection-link');
+    await page.click('#eas-navbar-collection-link');
+    await page.waitForSelector('#download-collection');
+    await page.click('#download-collection');
+  
+    const [collection_download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('link', { name: 'Collection', exact: true }).click()
+    ]);
+  
+    const cDownloadFolderPath = `${downloadFolderPath}/Collections/` ;
+    await fs.mkdir(cDownloadFolderPath, { recursive: true });
+    const collectionFileName = collection_download.suggestedFilename();
+    const collectionDownloadPath = path.join(cDownloadFolderPath, collectionFileName);
+    await collection_download.saveAs(collectionDownloadPath);
+    console.log('Collected strategies saved to:', collectionDownloadPath);
+  
+    console.log("Script1 download finished");
+    return{
+      portfolioDownloadPath: portfolioDownloadPath,
+      collectionDownloadPath: collectionDownloadPath
+    };
+  }
 
   async function uploadCollection(downloadPath){
     await page.waitForSelector('#eas-navbar-collection-link');
@@ -513,7 +524,7 @@ async function strategyThree(page){
 
 async function strategyFour(page) {
   const PFthreshold = 2;
-  const NPthreshold = 50000;
+  const NPthreshold = 30000;
   const SRthreshold = 0.1;
   const maxDrawdownThreshold = 10;
   const initialSRthreshold = 0.15;
@@ -562,14 +573,17 @@ async function strategyFour(page) {
 
   if (producedStrategies <= 30) {
     console.log("No. of strategies produced: ", producedStrategies);
+    console.log("Calling strategy One.....");
     await strategyOne(page);
   } else if (producedStrategies <= 150) {
     console.log("No. of strategies produced: ", producedStrategies);
   } else if (producedStrategies <= 240) {
     console.log("No. of strategies produced: ", producedStrategies);
+    console.log("Calling strategy Three.....");
     await strategyThree(page);
   }else if(producedStrategies > 240){
     console.log("No. of strategies produced: ", producedStrategies);
+    console.log("Calling strategy Four.....");
     await strategyFour(page);
   }
 

@@ -119,6 +119,14 @@ const { chromium } = require("playwright");
       .filter({ hasText: /^Minimum Sharpe ratio$/ })
       .getByRole("spinbutton")
       .fill(".01");
+    
+      await page.getByRole('link', { name: 'Available Indicators' }).click();
+      await page.locator('#toggle-entries').click();
+      await page.locator('#toggle-entries').click();
+      await page.locator('#toggle-exits').click();
+      await page.locator('#toggle-exits').click();
+      await page.getByRole('row', { name: 'Do not Exit' }).getByRole('checkbox').uncheck();
+      await page.getByRole('row', { name: 'Exit Time' }).getByRole('checkbox').uncheck();
 
     await page.getByRole("link", { name: "Strategy ID -" }).click();
     await page.getByRole("link", { name: "Monte Carlo" }).click();
