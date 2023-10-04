@@ -27,15 +27,15 @@ const maxPips = "1000";
 const takeProfitOptions = "0";
 const tpRangeMin = "2";
 const tpRangeMax = "1000";
-  //<---------------Generator Settings---------------->
+//<---------------Generator Settings---------------->
 const searchBestOption = "4";
 const maxEntryOption = "8";
 const maxExitOption = "4";
 const runTime = "720";
-  //<----------------Data Horizon------------------->
+//<----------------Data Horizon------------------->
 const maxDataBars = "200000";
 const startDate = "2018-09-14";
-  //
+//<----------------------------------------------->
 const collectionCapacity = "300";
 const accMinNetProfit = "250";
 const minCountOfTrade = "50";
@@ -43,7 +43,7 @@ const minSharpeRatio = "0.01";
 const montCarloMinNetProfit = "50";
 const montCarloMinCountOfTrade = "50";
 const minProfitFactor = "1.01";
-  //ViewPort size setup
+//ViewPort size setup
 const vpWidth = 550;
 const vpHeight = 250; 
 //<-----------------Change the required setups here----------------->
@@ -51,9 +51,8 @@ const vpHeight = 250;
 (async () => {
   const browser = await chromium.launch({
     headless: false,
-    //========> Change the number below to slowdown or go faster(lesser to go faster)
-    slowMo:600,
-    // channel: "msedge",
+    channel: channelName,
+    slowMo: speed,
   });
   
   const PFthreshold = 2;
@@ -74,7 +73,7 @@ const vpHeight = 250;
   //======> Copy the path of the collection and change backslashe with forward slash
   const Path = 'C:/Users/FCTwin1001/Downloads/automation_downloads/Collections';
   //======> Set the path to download files here
-  const downloadFolderPath = 'C:/Users/FCTwin1001/Downloads/automation_downloads/';
+  const downloadFolderPath = 'C:/Users/FCTwin1001/Downloads/';
 
   let initCollectionDownloadPath =`${Path}/${collection}`;
 
@@ -190,6 +189,14 @@ if (matches && matches.length >= 2) {
       .filter({ hasText: /^Minimum Sharpe ratio$/ })
       .getByRole("spinbutton")
       .fill(`${minSharpeRatio}`);//<----------------|
+    
+      await page.getByRole('link', { name: 'Available Indicators' }).click();
+      await page.locator('#toggle-entries').click();
+      await page.locator('#toggle-entries').click();
+      await page.locator('#toggle-exits').click();
+      await page.locator('#toggle-exits').click();
+      await page.getByRole('row', { name: 'Do not Exit' }).getByRole('checkbox').uncheck();
+      await page.getByRole('row', { name: 'Exit Time' }).getByRole('checkbox').uncheck();
 
     await page.getByRole("link", { name: "Strategy ID -" }).click();
     await page.getByRole("link", { name: "Monte Carlo" }).click();
@@ -265,9 +272,10 @@ if (matches && matches.length >= 2) {
         page.click('#export-portfolio-expert-mt5')
       ]);
     
-      await fs.mkdir(downloadFolderPath, { recursive: true });
+      const pDownloadFolderPath = `${downloadFolderPath}/EA/` ;
+      await fs.mkdir(pDownloadFolderPath, { recursive: true });
       const suggestedFileName = download.suggestedFilename();
-      const portfolioDownloadPath = path.join(downloadFolderPath, suggestedFileName);
+      const portfolioDownloadPath = path.join(pDownloadFolderPath, suggestedFileName);
       await download.saveAs(portfolioDownloadPath);
       console.log('Portfolio saved to:', portfolioDownloadPath);
     
@@ -281,9 +289,10 @@ if (matches && matches.length >= 2) {
         page.getByRole('link', { name: 'Collection', exact: true }).click()
       ]);
     
-      await fs.mkdir(downloadFolderPath, { recursive: true });
+      const cDownloadFolderPath = `${downloadFolderPath}/Collections/` ;
+      await fs.mkdir(cDownloadFolderPath, { recursive: true });
       const collectionFileName = collection_download.suggestedFilename();
-      const collectionDownloadPath = path.join(downloadFolderPath, collectionFileName);
+      const collectionDownloadPath = path.join(cDownloadFolderPath, collectionFileName);
       await collection_download.saveAs(collectionDownloadPath);
       console.log('Collected strategies saved to:', collectionDownloadPath);
     
@@ -531,7 +540,7 @@ async function strategyFour(page) {
     PFthreshold
   );
 
-  if (analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater) {
+  if (analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater && analysisResults.isNetProfitGreater) {
     await activatePerformanceFilter();
     let strategies = await getStrategies();
     while(strategies<90){
@@ -560,15 +569,15 @@ async function strategyFour(page) {
     (element) => element.textContent.trim()
   );
 
-  if (producedStrategies <= 30) {
+  if (producedStrategies <= 40) {
     console.log("No. of strategies produced: ", producedStrategies);
     await strategyOne(page);
-  } else if (producedStrategies <= 150) {
+  } else if (producedStrategies <= 50) {
     console.log("No. of strategies produced: ", producedStrategies);
-  } else if (producedStrategies <= 240) {
+  } else if (producedStrategies <= 200) {
     console.log("No. of strategies produced: ", producedStrategies);
     await strategyThree(page);
-  }else if(producedStrategies > 240){
+  }else if(producedStrategies > 200){
     console.log("No. of strategies produced: ", producedStrategies);
     await strategyFour(page);
   }

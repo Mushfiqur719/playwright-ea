@@ -111,6 +111,14 @@ async function initialSetup(){
     await page.getByRole('link', { name: 'Minimum Sharpe ratio' }).click();
     await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').click();
     await page.locator('div').filter({ hasText: /^Minimum Sharpe ratio$/ }).getByRole('spinbutton').fill('.05');
+
+    await page.getByRole('link', { name: 'Available Indicators' }).click();
+    await page.locator('#toggle-entries').click();
+    await page.locator('#toggle-entries').click();
+    await page.locator('#toggle-exits').click();
+    await page.locator('#toggle-exits').click();
+    await page.getByRole('row', { name: 'Do not Exit' }).getByRole('checkbox').uncheck();
+    await page.getByRole('row', { name: 'Exit Time' }).getByRole('checkbox').uncheck();
     
     await page.getByRole('link', { name: 'Strategy ID -' }).click();
     await page.getByRole('link', { name: 'Monte Carlo' }).click();
@@ -365,7 +373,7 @@ async function strategyThree(page){
   let analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
   
 
-  if(analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater){
+  if(analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater && analysisResults.isNetProfitGreater){
     console.log("All three conditions met");
     analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
     console.log(`Analysis results: ${analysisResults}`);
@@ -373,10 +381,10 @@ async function strategyThree(page){
     await clearCollection();
     await clearPortfolio();
   }else{
-    console.log("Inside Else");
+    console.log("All conditions not met. Activating performance filter....");
     await activatePerformanceFilter();
-    while((analysisResults.maxDrawdown>10.0 && analysisResults.sharpRatio<0.1)){
-      console.log("Increasing sharpe ratio in while loop");
+    while((analysisResults.maxDrawdown>=10.0 && analysisResults.sharpRatio<0.1)){
+      console.log("Increasing sharpe ratio....");
       // Change sharp ratio
       currentSRthreshold = currentSRthreshold + SRincrement;
       await updateSharpRatio(currentSRthreshold);
@@ -427,7 +435,7 @@ async function strategyFour(page) {
     PFthreshold
   );
 
-  if (analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater) {
+  if (analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater && analysisResults.isNetProfitGreater) {
     await activatePerformanceFilter();
     let strategies = await getStrategies();
     while(strategies<90){
