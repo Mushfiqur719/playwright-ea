@@ -7,12 +7,12 @@ const channelName = "msedge";
 const speed = 600;
 const timer = 12; //hours
 
-  //<---------------Reactor page---------------->
-  //<---------------Historical Data---------------->
+//<---------------Reactor page---------------->
+//<---------------Historical Data---------------->
 const dataSource = "FXView-Demo";
 const symbol = "USDCHF";
 const period = "H1";
-  //<---------------Strategy Properties---------------->
+//<---------------Strategy Properties---------------->
 const entrylots = "0.01";
 const oppEntrySignalOption = "2";
 const stopLossOption = "0";
@@ -22,15 +22,15 @@ const maxPips = "1000";
 const takeProfitOptions = "0";
 const tpRangeMin = "2";
 const tpRangeMax = "1000";
-  //<---------------Generator Settings---------------->
+//<---------------Generator Settings---------------->
 const searchBestOption = "4";
 const maxEntryOption = "8";
 const maxExitOption = "4";
 const runTime = "720";
-  //<----------------Data Horizon------------------->
+//<----------------Data Horizon------------------->
 const maxDataBars = "200000";
 const startDate = "2018-09-14";
-  //
+//
 const collectionCapacity = "300";
 const accMinNetProfit = "250";
 const minCountOfTrade = "50";
@@ -38,9 +38,9 @@ const minSharpeRatio = "0.01";
 const montCarloMinNetProfit = "50";
 const montCarloMinCountOfTrade = "50";
 const minProfitFactor = "1.01";
-  //ViewPort size setup
+//ViewPort size setup
 const vpWidth = 550;
-const vpHeight = 250; 
+const vpHeight = 250;
 //<-----------------Change the required setups here----------------->
 
 (async () => {
@@ -49,7 +49,6 @@ const vpHeight = 250;
     channel: channelName,
     slowMo: speed,
   });
-
 
   const context = await browser.newContext({
     storageState: "auth.json",
@@ -89,43 +88,59 @@ const vpHeight = 250;
       .click();
     await page.getByLabel("Entry lots").click();
     await page.getByLabel("Entry lots").press("ArrowLeft");
-    await page.getByLabel("Entry lots").fill(`${entrylots}`);//<----------------|entrylots
-    await page.getByLabel("Opposite entry signal").selectOption(`${oppEntrySignalOption}`);//<----------------|
-    await page.getByLabel("Stop Loss", { exact: true }).selectOption(`${stopLossOption}`);//<----------------|
-    await page.getByLabel("Type").selectOption(`${typeOption}`);//<----------------|
+    await page.getByLabel("Entry lots").fill(`${entrylots}`); //<----------------|entrylots
+    await page
+      .getByLabel("Opposite entry signal")
+      .selectOption(`${oppEntrySignalOption}`); //<----------------|
+    await page
+      .getByLabel("Stop Loss", { exact: true })
+      .selectOption(`${stopLossOption}`); //<----------------|
+    await page.getByLabel("Type").selectOption(`${typeOption}`); //<----------------|
     await page.getByRole("spinbutton", { name: "Min (pips)" }).click();
-    await page.getByRole("spinbutton", { name: "Min (pips)" }).fill(`${minPips}`);//<----------------|
+    await page
+      .getByRole("spinbutton", { name: "Min (pips)" })
+      .fill(`${minPips}`); //<----------------|
     await page.getByRole("spinbutton", { name: "Max (pips)" }).click();
-    await page.getByRole("spinbutton", { name: "Max (pips)" }).fill(`${maxPips}`);//<----------------|
-    await page.getByLabel("Take Profit", { exact: true }).selectOption(`${takeProfitOptions}`);//<----------------|
+    await page
+      .getByRole("spinbutton", { name: "Max (pips)" })
+      .fill(`${maxPips}`); //<----------------|
+    await page
+      .getByLabel("Take Profit", { exact: true })
+      .selectOption(`${takeProfitOptions}`); //<----------------|
     await page.locator("#tp-range-min").click();
-    await page.locator("#tp-range-min").fill(`${tpRangeMin}`);//<----------------|
+    await page.locator("#tp-range-min").fill(`${tpRangeMin}`); //<----------------|
     await page.locator("#tp-range-max").click();
-    await page.locator("#tp-range-max").fill(`${tpRangeMax}`);//<----------------|
+    await page.locator("#tp-range-max").fill(`${tpRangeMax}`); //<----------------|
     // Generator Settings
     await page
       .locator("div")
       .filter({ hasText: /^3\. Generator settings$/ })
       .click();
     await page.locator("#search-best").selectOption(`${searchBestOption}`);
-    await page.getByLabel("Max entry indicators").selectOption(`${maxEntryOption}`);//<----------------|
-    await page.getByLabel("Max exit indicators").selectOption(`${maxExitOption}`);//<----------------|
+    await page
+      .getByLabel("Max entry indicators")
+      .selectOption(`${maxEntryOption}`); //<----------------|
+    await page
+      .getByLabel("Max exit indicators")
+      .selectOption(`${maxExitOption}`); //<----------------|
     await page
       .getByLabel("Generate strategies with\nPreset Indicators")
       .uncheck();
     await page.getByLabel("Working minutes").click();
-    await page.getByLabel("Working minutes").fill(`${runTime}`);//<----------------|
+    await page.getByLabel("Working minutes").fill(`${runTime}`); //<----------------|
     await page.getByRole("link", { name: "Data", exact: true }).click();
     await page.getByRole("link", { name: "Data Horizon" }).click();
     await page.getByLabel("Maximum data bars").click();
     await page.getByLabel("Maximum data bars").press("Control+a");
-    await page.getByLabel("Maximum data bars").fill(`${maxDataBars}`);//<----------------|
-    await page.getByLabel("Start date", { exact: true }).fill(`${startDate}`);//<----------------|
+    await page.getByLabel("Maximum data bars").fill(`${maxDataBars}`); //<----------------|
+    await page.getByLabel("Start date", { exact: true }).fill(`${startDate}`); //<----------------|
     await page.getByLabel("Use start date limit").check();
     // Tools
     await page.getByRole("link", { name: "Tools" }).click();
     // await page.getByLabel("Leverage").selectOption("6");
-    await page.getByLabel("Collection capacity").selectOption(`${collectionCapacity}`);//<----------------|
+    await page
+      .getByLabel("Collection capacity")
+      .selectOption(`${collectionCapacity}`); //<----------------|
     await page.getByRole("link", { name: "Acceptance Criteria" }).click();
     await page
       .locator("#validation-metrics-base div")
@@ -136,7 +151,7 @@ const vpHeight = 250;
       .locator("#validation-metrics-base div")
       .filter({ hasText: /^Minimum net profit$/ })
       .getByRole("spinbutton")
-      .fill(`${accMinNetProfit}`);//<----------------|
+      .fill(`${accMinNetProfit}`); //<----------------|
     await page
       .locator("div")
       .filter({ hasText: /^Minimum count of trades$/ })
@@ -146,7 +161,7 @@ const vpHeight = 250;
       .locator("div")
       .filter({ hasText: /^Minimum count of trades$/ })
       .getByRole("spinbutton")
-      .fill(`${minCountOfTrade}`);//<----------------|
+      .fill(`${minCountOfTrade}`); //<----------------|
     await page
       .locator("#validation-metrics-base")
       .getByRole("button", { name: "+ Add acceptance criteria" })
@@ -161,15 +176,21 @@ const vpHeight = 250;
       .locator("div")
       .filter({ hasText: /^Minimum Sharpe ratio$/ })
       .getByRole("spinbutton")
-      .fill(`${minSharpeRatio}`);//<----------------|
-    
-      await page.getByRole('link', { name: 'Available Indicators' }).click();
-      await page.locator('#toggle-entries').click();
-      await page.locator('#toggle-entries').click();
-      await page.locator('#toggle-exits').click();
-      await page.locator('#toggle-exits').click();
-      await page.getByRole('row', { name: 'Do not Exit' }).getByRole('checkbox').uncheck();
-      await page.getByRole('row', { name: 'Exit Time' }).getByRole('checkbox').uncheck();
+      .fill(`${minSharpeRatio}`); //<----------------|
+
+    await page.getByRole("link", { name: "Available Indicators" }).click();
+    await page.locator("#toggle-entries").click();
+    await page.locator("#toggle-entries").click();
+    await page.locator("#toggle-exits").click();
+    await page.locator("#toggle-exits").click();
+    await page
+      .getByRole("row", { name: "Do not Exit" })
+      .getByRole("checkbox")
+      .uncheck();
+    await page
+      .getByRole("row", { name: "Exit Time" })
+      .getByRole("checkbox")
+      .uncheck();
 
     await page.getByRole("link", { name: "Strategy ID -" }).click();
     await page.getByRole("link", { name: "Monte Carlo" }).click();
@@ -190,7 +211,7 @@ const vpHeight = 250;
       .locator("div")
       .filter({ hasText: /^Minimum net profit$/ })
       .getByRole("spinbutton")
-      .fill(`${montCarloMinNetProfit}`);//<----------------|
+      .fill(`${montCarloMinNetProfit}`); //<----------------|
     await page
       .locator("div")
       .filter({ hasText: /^Minimum count of trades$/ })
@@ -200,7 +221,7 @@ const vpHeight = 250;
       .locator("div")
       .filter({ hasText: /^Minimum count of trades$/ })
       .getByRole("spinbutton")
-      .fill(`${montCarloMinCountOfTrade}`);//<----------------|
+      .fill(`${montCarloMinCountOfTrade}`); //<----------------|
     await page
       .getByRole("button", { name: "+ Add validation criteria" })
       .click();
@@ -214,12 +235,12 @@ const vpHeight = 250;
       .locator("div")
       .filter({ hasText: /^Minimum profit factor$/ })
       .getByRole("spinbutton")
-      .fill(`${minProfitFactor}`);//<----------------|
+      .fill(`${minProfitFactor}`); //<----------------|
     await page.getByRole("link", { name: "Reactor", exact: true }).click();
     await page.waitForTimeout(5000);
     await page.getByRole("button", { name: "Confirm" }).click();
     await RunOrStopReactor();
-    await page.setViewportSize({ width: vpWidth, height: vpHeight });//<----------------|
+    await page.setViewportSize({ width: vpWidth, height: vpHeight }); //<----------------|
   }
 
   // <------------------------End: Initial Setup------------------------->
@@ -276,7 +297,6 @@ const vpHeight = 250;
     await page.click("#remove-all-button");
     console.log("Collection Deleted");
   }
-
 
   async function downloadFiles() {
     //Export the portfolio and download the unfiltered collection
@@ -339,7 +359,7 @@ const vpHeight = 250;
     await RunOrStopReactor();
   }
 
-  async function strategyThree(page){
+  async function strategyThree(page) {
     const PFthreshold = 2;
     const NPthreshold = 30000;
     const SRthreshold = 0.1;
@@ -347,51 +367,79 @@ const vpHeight = 250;
     const initialSRthreshold = 0.07;
     const maxSRthreshold = 0.5;
     const SRincrement = 0.02;
-  
+
     let currentSRthreshold = initialSRthreshold;
     let isCriteriaMet = false;
-  
-    let analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
-    
-  
-    if(analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater){
+
+    let analysisResults = await analyzeBacktestResults3(
+      page,
+      NPthreshold,
+      maxDrawdownThreshold,
+      SRthreshold,
+      PFthreshold
+    );
+
+    if (
+      analysisResults.isMaxDrawdownLess &&
+      analysisResults.isProfitFactorGreater &&
+      analysisResults.isSharpRatioGreater
+    ) {
       console.log("All three conditions met");
-      analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
+      analysisResults = await analyzeBacktestResults3(
+        page,
+        NPthreshold,
+        maxDrawdownThreshold,
+        SRthreshold,
+        PFthreshold
+      );
       console.log(`Analysis results: ${analysisResults}`);
       await downloadFiles();
       await clearCollection();
       await clearPortfolio();
-    }else{
+    } else {
       console.log("Inside Else");
       await activatePerformanceFilter();
-      while((analysisResults.maxDrawdown>=10.0 && analysisResults.sharpRatio<0.1)){
+      while (
+        analysisResults.maxDrawdown >= 10.0 &&
+        analysisResults.sharpRatio < 0.1
+      ) {
         console.log("Increasing sharpe ratio.....");
         // Change sharp ratio
         currentSRthreshold = currentSRthreshold + SRincrement;
         await updateSharpRatio(currentSRthreshold);
-        analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
+        analysisResults = await analyzeBacktestResults3(
+          page,
+          NPthreshold,
+          maxDrawdownThreshold,
+          SRthreshold,
+          PFthreshold
+        );
         console.log(analysisResults);
-  
       }
-      analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
-      
-      if(!analysisResults.isProfitFactorGreater){
+      analysisResults = await analyzeBacktestResults3(
+        page,
+        NPthreshold,
+        maxDrawdownThreshold,
+        SRthreshold,
+        PFthreshold
+      );
+
+      if (!analysisResults.isProfitFactorGreater) {
         console.log("Profit factor is greater downloading files.");
         await downloadFiles();
         await uncheckPerformanceFilter();
         await downloadFiles();
-      }else{
+      } else {
         console.log("Profit factor is smaller re-running reactor.");
         let files = await downloadFiles();
         await clearPortfolio();
         await clearCollection();
-        console.log(files.collectionDownloadPath)
+        console.log(files.collectionDownloadPath);
         await uploadCollection(files.collectionDownloadPath);
-  
+
         // Change sharp ratio in acceptance criteria
-        await changeSharpRatioAcceptanceCriteria(currentSRthreshold-0.01);
+        await changeSharpRatioAcceptanceCriteria(currentSRthreshold - 0.01);
         await RunOrStopReactor();
-  
       }
     }
   }
@@ -416,11 +464,15 @@ const vpHeight = 250;
       PFthreshold
     );
 
-    if (analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater) {
+    if (
+      analysisResults.isMaxDrawdownLess &&
+      analysisResults.isProfitFactorGreater &&
+      analysisResults.isSharpRatioGreater
+    ) {
       await activatePerformanceFilter();
       let strategies = await getStrategies();
-      while(strategies<90){
-        currentSRthreshold = currentSRthreshold+SRincrement;
+      while (strategies < 90) {
+        currentSRthreshold = currentSRthreshold + SRincrement;
         await updateSharpRatio(currentSRthreshold);
         strategies = await getStrategies();
       }
@@ -452,7 +504,7 @@ const vpHeight = 250;
   } else if (producedStrategies <= 200) {
     console.log("No. of strategies produced: ", producedStrategies);
     await strategyThree();
-  }else if(producedStrategies > 200){
+  } else if (producedStrategies > 200) {
     console.log("No. of strategies produced: ", producedStrategies);
     await strategyFour();
   }

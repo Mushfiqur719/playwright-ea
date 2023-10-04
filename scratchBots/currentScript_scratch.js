@@ -36,9 +36,9 @@ const { chromium } = require("playwright");
     await page.getByRole("link", { name: "Reactor", exact: true }).click();
 
     // Change the Data Source, Symbol and Period here
-    await page.getByLabel("Data source").selectOption("FPMarkets-Live");
-    await page.getByLabel("Symbol").selectOption("ADAUSD");
-    await page.getByLabel("Period").selectOption("H1");
+    await page.getByLabel("Data source").selectOption(`${dataSource}`);
+    await page.getByLabel("Symbol").selectOption(`${symbol}`);
+    await page.getByLabel("Period").selectOption(`${period}`);
     // Strategy properties
     await page
       .locator("div")
@@ -46,43 +46,43 @@ const { chromium } = require("playwright");
       .click();
     await page.getByLabel("Entry lots").click();
     await page.getByLabel("Entry lots").press("ArrowLeft");
-    await page.getByLabel("Entry lots").fill("0.01");
-    await page.getByLabel("Opposite entry signal").selectOption("2");
-    await page.getByLabel("Stop Loss", { exact: true }).selectOption("0");
-    await page.getByLabel("Type").selectOption("3");
+    await page.getByLabel("Entry lots").fill(`${entrylots}`);//<----------------|entrylots
+    await page.getByLabel("Opposite entry signal").selectOption(`${oppEntrySignalOption}`);//<----------------|
+    await page.getByLabel("Stop Loss", { exact: true }).selectOption(`${stopLossOption}`);//<----------------|
+    await page.getByLabel("Type").selectOption(`${typeOption}`);//<----------------|
     await page.getByRole("spinbutton", { name: "Min (pips)" }).click();
-    await page.getByRole("spinbutton", { name: "Min (pips)" }).fill("1");
+    await page.getByRole("spinbutton", { name: "Min (pips)" }).fill(`${minPips}`);//<----------------|
     await page.getByRole("spinbutton", { name: "Max (pips)" }).click();
-    await page.getByRole("spinbutton", { name: "Max (pips)" }).fill("1000");
-    await page.getByLabel("Take Profit", { exact: true }).selectOption("0");
+    await page.getByRole("spinbutton", { name: "Max (pips)" }).fill(`${maxPips}`);//<----------------|
+    await page.getByLabel("Take Profit", { exact: true }).selectOption(`${takeProfitOptions}`);//<----------------|
     await page.locator("#tp-range-min").click();
-    await page.locator("#tp-range-min").fill("2");
+    await page.locator("#tp-range-min").fill(`${tpRangeMin}`);//<----------------|
     await page.locator("#tp-range-max").click();
-    await page.locator("#tp-range-max").fill("1000");
+    await page.locator("#tp-range-max").fill(`${tpRangeMax}`);//<----------------|
     // Generator Settings
     await page
       .locator("div")
       .filter({ hasText: /^3\. Generator settings$/ })
       .click();
-    await page.locator("#search-best").selectOption("4");
-    await page.getByLabel("Max entry indicators").selectOption("8");
-    await page.getByLabel("Max exit indicators").selectOption("4");
+    await page.locator("#search-best").selectOption(`${searchBestOption}`);
+    await page.getByLabel("Max entry indicators").selectOption(`${maxEntryOption}`);//<----------------|
+    await page.getByLabel("Max exit indicators").selectOption(`${maxExitOption}`);//<----------------|
     await page
       .getByLabel("Generate strategies with\nPreset Indicators")
       .uncheck();
     await page.getByLabel("Working minutes").click();
-    await page.getByLabel("Working minutes").fill("720");
+    await page.getByLabel("Working minutes").fill(`${runTime}`);//<----------------|
     await page.getByRole("link", { name: "Data", exact: true }).click();
     await page.getByRole("link", { name: "Data Horizon" }).click();
     await page.getByLabel("Maximum data bars").click();
     await page.getByLabel("Maximum data bars").press("Control+a");
-    await page.getByLabel("Maximum data bars").fill("200000");
-    await page.getByLabel("Start date", { exact: true }).fill("2018-09-17");
+    await page.getByLabel("Maximum data bars").fill(`${maxDataBars}`);//<----------------|
+    await page.getByLabel("Start date", { exact: true }).fill(`${startDate}`);//<----------------|
     await page.getByLabel("Use start date limit").check();
     // Tools
     await page.getByRole("link", { name: "Tools" }).click();
     // await page.getByLabel("Leverage").selectOption("6");
-    await page.getByLabel("Collection capacity").selectOption("300");
+    await page.getByLabel("Collection capacity").selectOption(`${collectionCapacity}`);//<----------------|
     await page.getByRole("link", { name: "Acceptance Criteria" }).click();
     await page
       .locator("#validation-metrics-base div")
@@ -93,7 +93,7 @@ const { chromium } = require("playwright");
       .locator("#validation-metrics-base div")
       .filter({ hasText: /^Minimum net profit$/ })
       .getByRole("spinbutton")
-      .fill("250");
+      .fill(`${accMinNetProfit}`);//<----------------|
     await page
       .locator("div")
       .filter({ hasText: /^Minimum count of trades$/ })
@@ -103,7 +103,7 @@ const { chromium } = require("playwright");
       .locator("div")
       .filter({ hasText: /^Minimum count of trades$/ })
       .getByRole("spinbutton")
-      .fill("50");
+      .fill(`${minCountOfTrade}`);//<----------------|
     await page
       .locator("#validation-metrics-base")
       .getByRole("button", { name: "+ Add acceptance criteria" })
@@ -118,7 +118,7 @@ const { chromium } = require("playwright");
       .locator("div")
       .filter({ hasText: /^Minimum Sharpe ratio$/ })
       .getByRole("spinbutton")
-      .fill(".01");
+      .fill(`${minSharpeRatio}`);//<----------------|
     
       await page.getByRole('link', { name: 'Available Indicators' }).click();
       await page.locator('#toggle-entries').click();
@@ -147,7 +147,7 @@ const { chromium } = require("playwright");
       .locator("div")
       .filter({ hasText: /^Minimum net profit$/ })
       .getByRole("spinbutton")
-      .fill("50");
+      .fill(`${montCarloMinNetProfit}`);//<----------------|
     await page
       .locator("div")
       .filter({ hasText: /^Minimum count of trades$/ })
@@ -157,7 +157,7 @@ const { chromium } = require("playwright");
       .locator("div")
       .filter({ hasText: /^Minimum count of trades$/ })
       .getByRole("spinbutton")
-      .fill("50");
+      .fill(`${montCarloMinCountOfTrade}`);//<----------------|
     await page
       .getByRole("button", { name: "+ Add validation criteria" })
       .click();
@@ -171,12 +171,12 @@ const { chromium } = require("playwright");
       .locator("div")
       .filter({ hasText: /^Minimum profit factor$/ })
       .getByRole("spinbutton")
-      .fill("1.01");
+      .fill(`${minProfitFactor}`);//<----------------|
     await page.getByRole("link", { name: "Reactor", exact: true }).click();
     await page.waitForTimeout(5000);
     await page.getByRole("button", { name: "Confirm" }).click();
     await RunOrStopReactor();
-    await page.setViewportSize({ width: 550, height: 250 });
+    await page.setViewportSize({ width: vpWidth, height: vpHeight });//<----------------|
   }
 
   // <------------------------End: Initial Setup------------------------->

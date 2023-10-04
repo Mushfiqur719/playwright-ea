@@ -373,7 +373,7 @@ async function strategyThree(page){
   let analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
   
 
-  if(analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater){
+  if(analysisResults.isMaxDrawdownLess && analysisResults.isProfitFactorGreater && analysisResults.isSharpRatioGreater && analysisResults.isNetProfitGreater){
     console.log("All three conditions met");
     analysisResults = await analyzeBacktestResults3(page,NPthreshold,maxDrawdownThreshold,SRthreshold,PFthreshold);
     console.log(`Analysis results: ${analysisResults}`);
@@ -381,10 +381,10 @@ async function strategyThree(page){
     await clearCollection();
     await clearPortfolio();
   }else{
-    console.log("Inside Else");
+    console.log("All conditions not met. Activating performance filter....");
     await activatePerformanceFilter();
-    while((analysisResults.maxDrawdown>10.0 && analysisResults.sharpRatio<0.1)){
-      console.log("Increasing sharpe ratio in while loop");
+    while((analysisResults.maxDrawdown>=10.0 && analysisResults.sharpRatio<0.1)){
+      console.log("Increasing sharpe ratio....");
       // Change sharp ratio
       currentSRthreshold = currentSRthreshold + SRincrement;
       await updateSharpRatio(currentSRthreshold);
