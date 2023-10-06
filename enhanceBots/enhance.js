@@ -7,7 +7,7 @@ const { chromium } = require('playwright');
     headless: false,
     //========> Change the number below to slowdown or go faster(lesser to go faster)
     slowMo:100,
-    // channel: "msedge",
+    channel: "msedge",
   });
   
 
